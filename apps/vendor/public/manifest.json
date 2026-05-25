@@ -1,0 +1,14 @@
+{
+  "name": "Auto to Rental — Vendor Portal",
+  "short_name": "ATR Vendor",
+  "description": "Auto to Rental vendor portal — list vehicles, manage promotions, see analytics.",
+  "start_url": "/rental/",
+  "scope": "/rental/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f1729",
+  "theme_color": "#1753b0",
+  "icons": [
+    { "src": "/rental/favicon.png", "sizes": "256x256", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

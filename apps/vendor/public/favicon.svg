@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#ffffff"/>
+  <!-- Outer A shape (black outline) -->
+  <path d="M 92 460
+           L 200 60
+           L 312 60
+           L 420 460
+           L 340 460
+           L 318 370
+           L 194 370
+           L 172 460 Z
+           M 215 295
+           L 297 295
+           L 256 130 Z"
+        fill="#000000"
+        fill-rule="evenodd"/>
+  <!-- Inner A (blue fill, inset slightly from outline) -->
+  <path d="M 122 442
+           L 222 78
+           L 290 78
+           L 390 442
+           L 350 442
+           L 326 348
+           L 186 348
+           L 162 442 Z
+           M 202 315
+           L 310 315
+           L 256 100 Z"
+        fill="#1f53d1"
+        fill-rule="evenodd"/>
+</svg>
