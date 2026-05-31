@@ -1,13 +1,16 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
-import { Resend } from "resend"
+import { resolveSellerByParam } from "../../../../../lib/resolve-seller"
+import { isEmailConfiguredForScope, sendEmail } from "../../../../../lib/email"
 
-const FROM = process.env.RESEND_FROM || "Auto to Rental <info@autotorental.com>"
+const FROM = process.env.ZOHO_FROM || process.env.SMTP_FROM || process.env.RESEND_FROM || "Auto to Rental <info@autotorental.com>"
 
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
-  const id = req.params.id as string
   const body = req.body as any
   const pg: any = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
+  const sellerRow = await resolveSellerByParam(pg, req.params.id as string)
+  if (!sellerRow) return res.status(404).json({ message: "Seller not found" })
+  const id = sellerRow.id
 
   const update: any = { updated_at: new Date() }
 
@@ -29,13 +32,12 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
 
   // Send welcome email on approval
   if (body.action === "approve" && seller?.email) {
-    const apiKey = process.env.RESEND_API_KEY || ""
-    if (apiKey) {
+    if (await isEmailConfiguredForScope(req.scope)) {
       try {
-        const resend = new Resend(apiKey)
-        await resend.emails.send({
+        await sendEmail({
+          scope: req.scope,
           from: FROM,
-          to: [seller.email],
+          to: seller.email,
           subject: "Welcome to Auto to Rental — Your Account Is Approved!",
           html: `<!doctype html>
 <html><body style="margin:0;padding:0;background:#f6f7fb;font-family:-apple-system,system-ui,sans-serif">

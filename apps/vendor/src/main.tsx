@@ -1,6 +1,7 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import "@mercurjs/vendor/index.css"
+import "./vendor-overrides.css"
 import App from "@mercurjs/vendor"
 
 // Rebrand to "Auto to Rental" and rename "Products" → "Vehicles" everywhere.
@@ -20,8 +21,24 @@ const TEXT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/Welcome to Mercur/g, "Welcome to Auto to Rental"],
 ]
 
+// Never rewrite text the user is editing (inputs, textareas, contenteditable)
+// or non-display nodes (script/style) — only mutate static UI labels.
+function isEditableContext(node: Node | null): boolean {
+  let el = node instanceof Element ? node : node?.parentElement
+  while (el) {
+    const tag = el.tagName
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SCRIPT" || tag === "STYLE") return true
+    if ((el as HTMLElement).isContentEditable) return true
+    el = el.parentElement
+  }
+  return false
+}
+
 function replaceTextNodes(root: Node) {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) =>
+      isEditableContext(node) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+  })
   let n: Node | null
   while ((n = walker.nextNode())) {
     const t = n.nodeValue || ""
@@ -32,8 +49,36 @@ function replaceTextNodes(root: Node) {
   }
 }
 
+/** Remove Mercur default onboarding card image — keep bg only */
+function removeOnboardingHero() {
+  document.querySelectorAll('img[src*="onboarding/0.png"]').forEach((el) => el.remove())
+}
+
+/** Routes hidden in this market (no transactions / no orders yet). */
+const HIDDEN_ROUTES = ["payouts", "orders", "settings/store"]
+
+/** Remove hidden routes' sidebar links + block direct navigation to them. */
+function removeHiddenRoutes() {
+  for (const route of HIDDEN_ROUTES) {
+    document
+      .querySelectorAll(
+        `a[href$="/${route}"], a[href*="/${route}/"], a[href*="/${route}?"]`
+      )
+      .forEach((el) => {
+        // Never hide the Settings layout "back" button: it is a Link to
+        // /orders rendered inside this unique wrapper. Hiding /orders in the
+        // main sidebar must not remove the settings back arrow.
+        if (el.closest(".bg-ui-bg-subtle.p-3")) return
+        const li = el.closest("li") || el
+        ;(li as HTMLElement).style.display = "none"
+      })
+  }
+}
+
 function customize() {
   replaceTextNodes(document.body)
+  removeOnboardingHero()
+  removeHiddenRoutes()
 }
 
 new MutationObserver(customize).observe(document.body, { childList: true, subtree: true })

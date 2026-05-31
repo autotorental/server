@@ -3,18 +3,39 @@ import type { RouteConfig } from "@mercurjs/dashboard-sdk"
 import { SingleColumnPage } from "@mercurjs/dashboard-shared"
 import { Container, Heading, Text, Table, Badge, Button, Input, Label, Select, FocusModal } from "@medusajs/ui"
 import { MapPin, Plus, Trash, PencilSquare, Photo } from "@medusajs/icons"
+import { API, resolveMediaUrl } from "../../lib/api"
 
 export const config: RouteConfig = { label: "Locations", icon: MapPin }
 
-const API = "https://api.autotorental.com"
 type City = { id?: string; country_code: string; name: string; name_ar: string|null; slug: string; is_active: boolean; sort_order: number; image_url?: string|null }
 
+// Arab / GCC markets are shown first; every other country in the world follows.
+const PRIORITY = ["ae", "sa", "kw", "qa", "om", "bh", "jo", "sy", "eg", "lb", "iq", "ye", "ma", "dz", "tn", "ly", "sd"]
+const ALL_CC = "ad ae af ag ai al am ao aq ar as at au aw ax az ba bb bd be bf bg bh bi bj bl bm bn bo bq br bs bt bv bw by bz ca cc cd cf cg ch ci ck cl cm cn co cr cu cv cw cx cy cz de dj dk dm do dz ec ee eg eh er es et fi fj fk fm fo fr ga gb gd ge gf gg gh gi gl gm gn gp gq gr gs gt gu gw gy hk hm hn hr ht hu id ie il im in io iq ir is it je jm jo jp ke kg kh ki km kn kp kr kw ky kz la lb lc li lk lr ls lt lu lv ly ma mc md me mf mg mh mk ml mm mn mo mp mq mr ms mt mu mv mw mx my mz na nc ne nf ng ni nl no np nr nu nz om pa pe pf pg ph pk pl pm pn pr ps pt pw py qa re ro rs ru rw sa sb sc sd se sg sh si sj sk sl sm sn so sr ss st sv sx sy sz tc td tf tg th tj tk tl tm tn to tr tt tv tw tz ua ug um us uy uz va vc ve vg vi vn vu wf ws ye yt za zm zw".split(" ")
+
+// 🇦🇪 flag from the 2-letter code (regional-indicator letters) — works for any country.
+const flagEmoji = (cc: string) =>
+  /^[a-z]{2}$/i.test(cc)
+    ? String.fromCodePoint(...[...cc.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65))
+    : ""
+
+let regionNames: any = null
+try { regionNames = new (Intl as any).DisplayNames(["en"], { type: "region" }) } catch { /* older runtime */ }
+
+const NAME_OVERRIDE: Record<string, string> = { ae: "UAE" }
+const countryName = (cc: string) => {
+  const lc = (cc || "").toLowerCase()
+  if (NAME_OVERRIDE[lc]) return NAME_OVERRIDE[lc]
+  const code = lc.toUpperCase()
+  try { return regionNames?.of(code) || code } catch { return code }
+}
+const countryLabel = (cc: string) => `${flagEmoji(cc)} ${countryName(cc)}`.trim()
+
+// Full world list: priority markets first, then everything else A→Z by name.
 const COUNTRIES = [
-  { code: "ae", label: "🇦🇪 UAE" }, { code: "sy", label: "🇸🇾 Syria" },
-  { code: "sa", label: "🇸🇦 Saudi Arabia" }, { code: "kw", label: "🇰🇼 Kuwait" },
-  { code: "qa", label: "🇶🇦 Qatar" }, { code: "om", label: "🇴🇲 Oman" },
-  { code: "bh", label: "🇧🇭 Bahrain" }, { code: "jo", label: "🇯🇴 Jordan" },
-]
+  ...PRIORITY,
+  ...ALL_CC.filter((c) => !PRIORITY.includes(c)).sort((a, b) => countryName(a).localeCompare(countryName(b))),
+].map((code) => ({ code, label: countryLabel(code) }))
 
 const Form = ({ item, onSave, onClose }: { item: Partial<City>|null; onSave: (d: any) => Promise<void>; onClose: () => void }) => {
   const [f, setF] = useState<any>(item || { country_code: "ae", name: "", name_ar: "", slug: "", sort_order: 0, is_active: true, image_url: "" })
@@ -39,8 +60,8 @@ const Form = ({ item, onSave, onClose }: { item: Partial<City>|null; onSave: (d:
       <div className="grid grid-cols-2 gap-3">
         <div><Label size="small">Country</Label>
           <Select value={f.country_code} onValueChange={v => setF({...f, country_code: v})}>
-            <Select.Trigger><Select.Value /></Select.Trigger>
-            <Select.Content>{COUNTRIES.map(c => <Select.Item key={c.code} value={c.code}>{c.label}</Select.Item>)}</Select.Content>
+            <Select.Trigger><Select.Value placeholder="Select a country" /></Select.Trigger>
+            <Select.Content className="max-h-72">{COUNTRIES.map(c => <Select.Item key={c.code} value={c.code}>{c.label}</Select.Item>)}</Select.Content>
           </Select>
         </div>
         <div><Label size="small">Sort order</Label><Input type="number" value={f.sort_order||0} onChange={e => setF({...f, sort_order: parseInt(e.target.value,10)||0})} /></div>
@@ -52,7 +73,7 @@ const Form = ({ item, onSave, onClose }: { item: Partial<City>|null; onSave: (d:
           <Label size="small">City Photo (shown on storefront)</Label>
           <div className="flex items-start gap-3 mt-1">
             <div className="w-32 h-24 rounded-lg bg-ui-bg-subtle border border-ui-border-base flex items-center justify-center overflow-hidden">
-              {f.image_url ? <img src={f.image_url} alt="" className="w-full h-full object-cover"/> : <Photo />}
+              {f.image_url ? <img src={resolveMediaUrl(f.image_url)} alt="" className="w-full h-full object-cover"/> : <Photo />}
             </div>
             <div className="flex flex-col gap-2 flex-1">
               <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => e.target.files?.[0] && upload(e.target.files[0])}/>
@@ -79,7 +100,7 @@ const Page = () => {
   const [loading, setLoading] = useState(true)
   const [edit, setEdit] = useState<Partial<City>|null>(null)
   const [open, setOpen] = useState(false)
-  const load = () => { setLoading(true); fetch(`${API}/admin/locations/cities`, { credentials: "include" }).then(r => r.json()).then(d => setCities(d.cities || [])).finally(() => setLoading(false)) }
+  const load = () => { setLoading(true); fetch(`${API}/admin/locations/cities`, { credentials: "include" }).then(r => r.json()).then(d => setCities(d.cities || [])).catch(() => setCities([])).finally(() => setLoading(false)) }
   useEffect(load, [])
   const save = async (data: any) => {
     const url = data.id ? `${API}/admin/locations/cities/${data.id}` : `${API}/admin/locations/cities`
@@ -98,13 +119,12 @@ const Page = () => {
           <Heading level="h1">📍 Locations</Heading>
           <Button onClick={() => { setEdit(null); setOpen(true) }}><Plus /> Add City</Button>
         </div>
-        <Text className="text-ui-fg-subtle">Cities where rental companies operate. Used in storefront filters. Upload a photo for each city to make it shine on the homepage.</Text>
+        <Text className="text-ui-fg-subtle">Cities where rental companies operate. Used in storefront filters. Pick any country in the world, then upload a photo for each city to make it shine on the homepage.</Text>
       </Container>
       {Object.entries(grouped).map(([cc, list]) => {
-        const country = COUNTRIES.find(c => c.code === cc)
         return (
           <Container key={cc} className="p-0 divide-y">
-            <div className="p-6"><Heading level="h2">{country?.label || cc.toUpperCase()} ({list.length})</Heading></div>
+            <div className="p-6"><Heading level="h2">{countryLabel(cc)} ({list.length})</Heading></div>
             <Table>
               <Table.Header><Table.Row>
                 <Table.HeaderCell>#</Table.HeaderCell>
@@ -120,7 +140,7 @@ const Page = () => {
                   <Table.Row key={c.id}>
                     <Table.Cell className="text-ui-fg-muted">{i + 1}</Table.Cell>
                     <Table.Cell>
-                      {c.image_url ? <img src={c.image_url} alt={c.name} className="w-16 h-10 object-cover rounded"/> : <div className="w-16 h-10 rounded bg-ui-bg-subtle flex items-center justify-center"><Photo /></div>}
+                      {c.image_url ? <img src={resolveMediaUrl(c.image_url)} alt={c.name} className="w-16 h-10 object-cover rounded"/> : <div className="w-16 h-10 rounded bg-ui-bg-subtle flex items-center justify-center"><Photo /></div>}
                     </Table.Cell>
                     <Table.Cell className="font-medium">{c.name}</Table.Cell>
                     <Table.Cell dir="rtl">{c.name_ar || "—"}</Table.Cell>

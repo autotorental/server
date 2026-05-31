@@ -21,10 +21,33 @@ function newId() {
   return "msg_" + Math.random().toString(36).slice(2, 14) + Date.now().toString(36)
 }
 
+export const AUTHENTICATE = false
+
+export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
+  const secret =
+    (await getSetting(req.scope, "inbound_email_secret")) ||
+    process.env.INBOUND_EMAIL_SECRET ||
+    ""
+  res.json({
+    ok: true,
+    method: "POST",
+    configured: !!secret,
+    message: secret
+      ? "Inbound email webhook is ready. Cloudflare Worker should POST JSON here with header X-ATR-Key."
+      : "Webhook exists but is not configured yet. Set inbound_email_secret in Admin → Integrations.",
+  })
+}
+
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
-  const secret = await getSetting(req.scope, "inbound_email_secret")
+  const secret =
+    (await getSetting(req.scope, "inbound_email_secret")) ||
+    process.env.INBOUND_EMAIL_SECRET ||
+    ""
   const provided = (req.headers["x-atr-key"] as string) || ""
-  if (secret && provided !== secret) {
+  if (!secret) {
+    return res.status(503).json({ message: "Inbound email webhook is not configured" })
+  }
+  if (provided !== secret) {
     return res.status(401).json({ message: "Invalid signing key" })
   }
 

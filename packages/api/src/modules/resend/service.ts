@@ -1,22 +1,19 @@
 import { AbstractNotificationProviderService, MedusaError } from "@medusajs/framework/utils"
 import { Logger, NotificationTypes } from "@medusajs/framework/types"
-import { Resend } from "resend"
+import { sendEmail } from "../../lib/email"
 
 type InjectedDependencies = { logger: Logger }
-type Options = { api_key: string; from: string }
+type Options = { from?: string }
 
 class ResendNotificationProviderService extends AbstractNotificationProviderService {
   static identifier = "resend"
   protected logger_: Logger
-  protected resend_: Resend
   protected from_: string
 
   constructor({ logger }: InjectedDependencies, options: Options) {
     super()
     this.logger_ = logger
-    this.from_ = options.from
-    if (!options.api_key) throw new Error("Missing Resend api_key")
-    this.resend_ = new Resend(options.api_key)
+    this.from_ = options.from || process.env.ZOHO_FROM || process.env.SMTP_FROM || process.env.RESEND_FROM || "Auto to Rental <no-reply@autotorental.com>"
   }
 
   async send(notification: NotificationTypes.ProviderSendNotificationDTO): Promise<NotificationTypes.ProviderSendNotificationResultsDTO> {
@@ -24,7 +21,7 @@ class ResendNotificationProviderService extends AbstractNotificationProviderServ
       throw new MedusaError(MedusaError.Types.INVALID_DATA, "No notification information provided")
     }
     if (notification.channel === "sms") {
-      throw new MedusaError(MedusaError.Types.INVALID_DATA, "SMS not supported by Resend")
+      throw new MedusaError(MedusaError.Types.INVALID_DATA, "SMS not supported by SMTP email provider")
     }
 
     const subject = (notification.data?.subject as string) || (notification.content as any)?.subject || "Notification"
@@ -32,17 +29,17 @@ class ResendNotificationProviderService extends AbstractNotificationProviderServ
     const text = (notification.data?.text as string) || (notification.content as any)?.text || notification.content?.toString?.()
 
     try {
-      const result = await this.resend_.emails.send({
+      const result = await sendEmail({
         from: this.from_,
-        to: [notification.to],
+        to: notification.to,
         subject,
         html: html || `<p>${text || ""}</p>`,
         text,
       })
-      this.logger_.info(`Resend email sent → ${notification.to} (id=${result.data?.id})`)
-      return { id: result.data?.id }
+      this.logger_.info(`SMTP email sent → ${notification.to} (id=${result.id})`)
+      return { id: result.id }
     } catch (e: any) {
-      this.logger_.error("Resend send failed: " + e.message)
+      this.logger_.error("SMTP send failed: " + e.message)
       throw new MedusaError(MedusaError.Types.UNEXPECTED_STATE, e.message)
     }
   }

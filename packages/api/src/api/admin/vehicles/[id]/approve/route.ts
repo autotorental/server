@@ -4,6 +4,7 @@ import { CATALOG_MODULE } from "../../../../../modules/catalog"
 import { LOCATIONS_MODULE } from "../../../../../modules/locations"
 import { postAndLog } from "../../../../../lib/social-post-log"
 import { notifyFollowers } from "../../../../../lib/follower-notify"
+import { syncVehicleToSearch } from "../../../../../lib/vehicle-meili"
 
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   const svc: any = req.scope.resolve(CATALOG_MODULE)
@@ -15,6 +16,12 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     approved_at: new Date(),
     rejected_at: null,
   }])
+
+  ;(async () => {
+    try { await syncVehicleToSearch(req.scope, v) } catch (e: any) {
+      console.error("[meili] approve index failed:", e?.message || e)
+    }
+  })()
 
   // Fire-and-forget social media post (don't block the response)
   ;(async () => {

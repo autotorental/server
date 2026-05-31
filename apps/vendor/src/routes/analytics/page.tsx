@@ -4,10 +4,9 @@ import { SingleColumnPage } from "@mercurjs/dashboard-shared"
 import { Container, Heading, Text, Table, Badge, Select, Button } from "@medusajs/ui"
 import { ChartBar, GlobeEurope, ArrowUpRightOnBox, Bolt } from "@medusajs/icons"
 import { CountryList, HeatmapChart, DeviceBreakdown } from "../../components/geo-widgets"
+import { API } from "../../lib/api"
 
 export const config: RouteConfig = { label: "Analytics", icon: ChartBar }
-
-const API = "https://api.autotorental.com"
 
 type Bucket = { date: string; call: number; whatsapp: number; webrtc: number; view: number; follow: number }
 type Timeseries = { series: Bucket[]; total: Bucket; days: number }
@@ -23,7 +22,7 @@ const METRICS: Array<{ key: Metric; label: string; icon: string; tint: string; g
   { key: "all", label: "Total Activity", icon: "📊", tint: "bg-slate-50 dark:bg-slate-900/40", gradient: "from-slate-700 to-slate-900", ring: "ring-slate-500/30", accent: "#475569" },
   { key: "call", label: "Phone Calls", icon: "📞", tint: "bg-emerald-50 dark:bg-emerald-900/30", gradient: "from-emerald-500 to-emerald-700", ring: "ring-emerald-500/40", accent: "#10b981" },
   { key: "whatsapp", label: "WhatsApp", icon: "💬", tint: "bg-green-50 dark:bg-green-900/30", gradient: "from-[#25D366] to-[#128c40]", ring: "ring-green-500/40", accent: "#25d366" },
-  { key: "webrtc", label: "Free Int'l Calls", icon: "🌍", tint: "bg-amber-50 dark:bg-amber-900/30", gradient: "from-amber-500 to-orange-600", ring: "ring-amber-500/40", accent: "#f59e0b" },
+  { key: "webrtc", label: "Free Call", icon: "🌍", tint: "bg-amber-50 dark:bg-amber-900/30", gradient: "from-amber-500 to-orange-600", ring: "ring-amber-500/40", accent: "#f59e0b" },
   { key: "view", label: "Page Views", icon: "👁️", tint: "bg-blue-50 dark:bg-blue-900/30", gradient: "from-blue-500 to-blue-700", ring: "ring-blue-500/40", accent: "#1753b0" },
 ]
 
@@ -126,7 +125,7 @@ const Page = () => {
                 <Select.Item value="all">All events</Select.Item>
                 <Select.Item value="call">📞 Phone calls</Select.Item>
                 <Select.Item value="whatsapp">💬 WhatsApp</Select.Item>
-                <Select.Item value="webrtc">🌍 Free Int'l</Select.Item>
+                <Select.Item value="webrtc">🌍 Free Call</Select.Item>
                 <Select.Item value="view">👁️ Views</Select.Item>
               </Select.Content>
             </Select>
@@ -271,7 +270,7 @@ const Page = () => {
                 <Table.Row key={`${p.product_id}-${p.event_type}`}>
                   <Table.Cell className="text-ui-fg-muted">{i + 1}</Table.Cell>
                   <Table.Cell><div className="font-medium">{p.product_title || p.product_id}</div></Table.Cell>
-                  <Table.Cell><Badge color={p.event_type === "whatsapp" ? "green" : p.event_type === "call" ? "blue" : p.event_type === "webrtc" ? "orange" : "grey"}>{p.event_type}</Badge></Table.Cell>
+                  <Table.Cell><Badge color={p.event_type === "whatsapp" ? "green" : p.event_type === "call" ? "blue" : p.event_type === "webrtc" ? "orange" : "grey"}>{p.event_type === "webrtc" ? "Free Call" : p.event_type}</Badge></Table.Cell>
                   <Table.Cell className="text-right font-bold tabular-nums">{p.count}</Table.Cell>
                 </Table.Row>
               ))}

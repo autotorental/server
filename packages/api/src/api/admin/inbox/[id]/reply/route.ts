@@ -1,12 +1,11 @@
 // POST /admin/inbox/:id/reply
 // Body: { subject, html, mark_replied }
-// Sends an HTML email via Resend FROM the configured from-address
+// Sends an HTML email via SMTP (Zoho-compatible) FROM the configured from-address
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
-import { Resend } from "resend"
+import { isEmailConfiguredForScope, sendEmail } from "../../../../../lib/email"
 
-const FROM = process.env.RESEND_FROM || "Auto to Rental <info@autotorental.com>"
-const API_KEY = process.env.RESEND_API_KEY || ""
+const FROM = process.env.ZOHO_FROM || process.env.SMTP_FROM || process.env.RESEND_FROM || "Auto to Rental <info@autotorental.com>"
 
 function newId() { return "es_" + Math.random().toString(36).slice(2, 14) + Date.now().toString(36) }
 
@@ -33,7 +32,7 @@ function wrapHtml(body: string, customerName: string): string {
 }
 
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
-  if (!API_KEY) return res.status(503).json({ message: "RESEND_API_KEY not set" })
+  if (!(await isEmailConfiguredForScope(req.scope))) return res.status(503).json({ message: "Zoho SMTP not configured" })
   const knex: any = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
   const b = req.body as any
 
@@ -45,27 +44,28 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   if (!text) return res.status(400).json({ message: "Reply body required" })
 
   const html = wrapHtml(text.split(/\n+/).map((p: string) => `<p>${p}</p>`).join(""), original.name)
+  const fromAccount = (b.from_account || original.mailbox || "").trim() || undefined
 
   try {
-    const resend = new Resend(API_KEY)
-    const result = await resend.emails.send({
-      from: FROM,
-      to: [original.email],
+    const result = await sendEmail({
+      scope: req.scope,
+      accountEmail: fromAccount,
+      to: original.email,
       subject,
       html,
       text,
-      replyTo: FROM,
     })
+    const fromAddr = result.from || fromAccount || FROM
     const sentRow = {
       id: newId(),
-      resend_id: result.data?.id || null,
+      resend_id: result.id || null,
       to_addr: original.email,
-      from_addr: FROM,
+      from_addr: fromAddr,
       subject,
       html,
       related_message_id: original.id,
       sent_by: (req as any).auth_context?.actor_id || "admin",
-      status: result.data ? "sent" : "failed",
+      status: result.id ? "sent" : "failed",
     }
     await knex("email_sent").insert(sentRow)
     if (b.mark_replied !== false) {

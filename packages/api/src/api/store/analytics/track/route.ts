@@ -1,18 +1,7 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ANALYTICS_MODULE } from "../../../../modules/analytics"
-import { open as openMmdb, Reader } from "maxmind"
-
-let geoReader: Reader<any> | null = null
-async function getGeo(): Promise<Reader<any> | null> {
-  if (geoReader) return geoReader
-  try {
-    geoReader = await openMmdb("/opt/autorental/geoip/GeoLite2-Country.mmdb")
-    return geoReader
-  } catch (e: any) {
-    console.warn("[geo] mmdb load failed:", e.message)
-    return null
-  }
-}
+import { resolveCountryFromIp } from "../../../../lib/geoip-shared"
+import { isBotUserAgent } from "../../../../lib/bot-filter"
 
 function detectDevice(ua: string | null): string {
   if (!ua) return "unknown"
@@ -38,27 +27,17 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   const ip = (req.headers["x-forwarded-for"] || req.ip || "").toString().split(",")[0].trim() || null
   const ua = (req.headers["user-agent"] as string) || null
 
-  // GeoIP lookup
-  let country_code: string | null = null
-  let country_name: string | null = null
-  if (ip && !ip.startsWith("127.") && !ip.startsWith("::1") && !ip.startsWith("10.") && !ip.startsWith("192.168.")) {
-    const reader = await getGeo()
-    if (reader) {
-      try {
-        const r: any = reader.get(ip)
-        if (r?.country) {
-          country_code = r.country.iso_code || null
-          country_name = r.country.names?.en || null
-        }
-      } catch {}
-    }
+  // Skip automated crawlers/monitors so analytics reflect real people.
+  if (isBotUserAgent(ua)) {
+    return res.status(202).json({ recorded: false, reason: "bot" })
   }
 
-  // Device + time
+  const { country_code, country_name } = await resolveCountryFromIp(ip, req.headers as Record<string, unknown>)
+
   const device_type = detectDevice(ua)
   const now = new Date()
-  const hour = now.getUTCHours() + 4 // UAE timezone UTC+4
-  const day_of_week = now.getUTCDay() // 0=Sunday
+  const hour = now.getUTCHours() + 4
+  const day_of_week = now.getUTCDay()
 
   const event = await analytics.createContactEvents({
     product_id: body.product_id,

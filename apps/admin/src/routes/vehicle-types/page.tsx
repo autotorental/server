@@ -3,10 +3,10 @@ import type { RouteConfig } from "@mercurjs/dashboard-sdk"
 import { SingleColumnPage } from "@mercurjs/dashboard-shared"
 import { Container, Heading, Text, Table, Button, Input, Label, FocusModal } from "@medusajs/ui"
 import { TagSolid, Plus, Trash, PencilSquare, Photo } from "@medusajs/icons"
+import { API } from "../../lib/api"
 
 export const config: RouteConfig = { label: "Vehicle Types", icon: TagSolid }
 
-const API = "https://api.autotorental.com"
 type BT = { id?: string; name: string; name_ar: string|null; slug: string; icon: string|null; icon_url: string|null; sort_order: number }
 
 const Form = ({ item, onSave, onClose }: any) => {
@@ -71,7 +71,7 @@ const Page = () => {
   const [loading, setLoading] = useState(true)
   const [edit, setEdit] = useState<Partial<BT>|null>(null)
   const [open, setOpen] = useState(false)
-  const load = () => { setLoading(true); fetch(`${API}/admin/catalog/body-types`, { credentials: "include" }).then(r => r.json()).then(d => setItems(d.body_types || [])).finally(() => setLoading(false)) }
+  const load = () => { setLoading(true); fetch(`${API}/admin/catalog/body-types`, { credentials: "include" }).then(r => r.json()).then(d => setItems(d.body_types || [])).catch(() => setItems([])).finally(() => setLoading(false)) }
   useEffect(load, [])
   const save = async (data: any) => {
     const url = data.id ? `${API}/admin/catalog/body-types/${data.id}` : `${API}/admin/catalog/body-types`

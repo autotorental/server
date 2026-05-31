@@ -1,6 +1,8 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { CATALOG_MODULE } from "../../../../modules/catalog"
 import { notifyFollowers } from "../../../../lib/follower-notify"
+import { removeVehicleFromSearch, syncVehicleToSearch } from "../../../../lib/vehicle-meili"
+import { normalizeVehicleMedia } from "../../../../lib/vehicle-media"
 
 function getSellerId(req: MedusaRequest): string | null {
   const auth = (req as any).auth_context
@@ -23,6 +25,11 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   const body = req.body as any
   delete body.id; delete body.seller_id; delete body.approved_at; delete body.rejected_at
   delete body.rejection_reason; delete body.rejection_note; delete body.is_featured; delete body.view_count
+  try {
+    normalizeVehicleMedia(body)
+  } catch (e: any) {
+    return res.status(400).json({ message: e?.message || "Invalid media payload" })
+  }
 
   // Detect price drop on an ACTIVE vehicle
   const wasActive = v.status === "active"
@@ -42,6 +49,8 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   }
   const [updated] = await svc.updateVehicles([{ id: req.params.id, ...body }])
 
+  try { await syncVehicleToSearch(req.scope, updated) } catch { /* optional */ }
+
   // Fire follower notification on price drop (active vehicle, smaller price, same seller)
   if (isPriceDrop) {
     ;(async () => {
@@ -60,6 +69,7 @@ export const DELETE = async (req: MedusaRequest, res: MedusaResponse) => {
   const svc: any = req.scope.resolve(CATALOG_MODULE)
   const v = await svc.retrieveVehicle(req.params.id).catch(() => null)
   if (!v || v.seller_id !== sellerId) return res.status(404).json({ message: "Not found" })
+  try { await removeVehicleFromSearch(req.params.id) } catch { /* optional */ }
   await svc.deleteVehicles([req.params.id])
   res.json({ id: req.params.id, deleted: true })
 }

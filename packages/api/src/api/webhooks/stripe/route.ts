@@ -26,10 +26,13 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
               (typeof req.body === "string" ? req.body : JSON.stringify(req.body))
   const sig = req.headers["stripe-signature"] as string
 
-  if (whSecret) {
-    if (!verifyStripeSignature(raw, sig, whSecret)) {
-      return res.status(400).send("Invalid signature")
-    }
+  const envSecret = process.env.STRIPE_WEBHOOK_SECRET || ""
+  const secret = whSecret || envSecret
+  if (!secret) {
+    return res.status(503).send("Stripe webhook secret not configured")
+  }
+  if (!verifyStripeSignature(raw, sig, secret)) {
+    return res.status(400).send("Invalid signature")
   }
 
   let event: any

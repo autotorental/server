@@ -1,6 +1,8 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { CATALOG_MODULE } from "../../../modules/catalog"
+import { normalizeVehicleMedia } from "../../../lib/vehicle-media"
+import { notifyAdminFeed } from "../../../lib/admin-feed"
 
 function getSellerId(req: MedusaRequest): string | null {
   const auth = (req as any).auth_context
@@ -37,6 +39,11 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
 
   const svc: any = req.scope.resolve(CATALOG_MODULE)
   const body = req.body as any
+  try {
+    normalizeVehicleMedia(body)
+  } catch (e: any) {
+    return res.status(400).json({ message: e?.message || "Invalid media payload" })
+  }
 
   // Auto-fill city + contact from seller defaults if not provided
   if (!body.city_id && seller.default_city_id) body.city_id = seller.default_city_id
@@ -46,7 +53,7 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   if (!body?.title || !body?.brand_id || !body?.city_id) {
     return res.status(400).json({
       message: "title, brand_id, city_id required",
-      hint: !body?.city_id ? "Set a default city in Company Profile, or pick one for this vehicle" : undefined,
+      hint: !body?.city_id ? "Set a default city in Trade License settings, or pick one for this vehicle" : undefined,
     })
   }
 
@@ -64,9 +71,24 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   body.rejected_at = null
 
   const [vehicle] = await svc.createVehicles([{ ...body, seller_id: sellerId }])
+  const vTitle = vehicle?.title || body.title
+  const company = seller.name || "A company"
+  if (canGoLive) {
+    void notifyAdminFeed(
+      req.scope,
+      "Vehicle pending approval",
+      company + " added \"" + vTitle + "\" and it needs your approval.\nReview & approve here:\nhttps://admin.autotorental.com/dashboard/pending-approvals"
+    )
+  } else {
+    void notifyAdminFeed(
+      req.scope,
+      "New vehicle (draft)",
+      company + " added \"" + vTitle + "\" but their trade license isn't verified yet, so it's saved as a draft."
+    )
+  }
   res.status(201).json({
     vehicle,
     license_status: canGoLive ? "ok" : "missing_or_expired",
-    notice: canGoLive ? null : "Saved as draft. Upload a valid Trade License in Company Profile to publish your listings.",
+    notice: canGoLive ? null : "Saved as draft. Upload a valid Trade License in Settings → Trade License to publish your listings.",
   })
 }

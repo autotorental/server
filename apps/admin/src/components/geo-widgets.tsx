@@ -1,7 +1,8 @@
 // Lightweight world map (SVG-based) showing visitor distribution.
 // For a 3D globe upgrade, swap to react-globe.gl later.
 "use client"
-import { useEffect, useState } from "react"
+import { GlobeEurope } from "@medusajs/icons"
+import { Text } from "@medusajs/ui"
 
 const COUNTRY_NAMES: Record<string, string> = {
   AE: "🇦🇪 UAE", SY: "🇸🇾 Syria", SA: "🇸🇦 Saudi Arabia", KW: "🇰🇼 Kuwait",
@@ -19,10 +20,10 @@ export function CountryList({ data }: { data: Array<{ code: string; name?: strin
   const max = Math.max(1, ...data.map(c => c.count))
   if (data.length === 0) {
     return (
-      <div className="bg-ui-bg-subtle rounded-lg p-10 text-center text-ui-fg-muted">
-        <div className="text-4xl mb-2">🌍</div>
-        <div className="text-sm">No country data yet.</div>
-        <div className="text-xs mt-1">Visitor countries will appear here as people contact rental companies.</div>
+      <div className="rounded-lg border border-dashed border-ui-border-base bg-ui-bg-subtle p-10 text-center">
+        <GlobeEurope className="mx-auto mb-2 text-ui-fg-muted" />
+        <Text className="text-ui-fg-subtle font-medium">No country data yet</Text>
+        <Text size="small" className="text-ui-fg-muted mt-1">Countries appear as visitors contact rental companies.</Text>
       </div>
     )
   }
@@ -45,7 +46,7 @@ export function CountryList({ data }: { data: Array<{ code: string; name?: strin
                 </div>
               </div>
               <div className="h-1.5 bg-ui-bg-subtle rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-blue-500 to-purple-600" style={{ width: `${bar}%` }}/>
+                <div className="h-full bg-ui-fg-interactive rounded-full transition-all" style={{ width: `${bar}%` }} />
               </div>
             </div>
           )
@@ -116,17 +117,26 @@ export function HeatmapChart({ data }: { data: Array<{ day: number; hour: number
 
 export function DeviceBreakdown({ data }: { data: Array<{ type: string; count: number }> }) {
   const total = data.reduce((s, d) => s + d.count, 0)
-  const icons: Record<string, string> = { mobile: "📱", desktop: "💻", tablet: "📱", unknown: "❓" }
+  const labels: Record<string, string> = { mobile: "Mobile", desktop: "Desktop", tablet: "Tablet", unknown: "Unknown" }
+  if (data.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-ui-border-base bg-ui-bg-subtle p-8 text-center text-sm text-ui-fg-muted">
+        No device data yet
+      </div>
+    )
+  }
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       {data.map(d => {
         const pct = total > 0 ? (d.count / total) * 100 : 0
         return (
-          <div key={d.type} className="bg-ui-bg-base border border-ui-border-base rounded-lg p-4">
-            <div className="text-2xl mb-1">{icons[d.type] || "❓"}</div>
-            <div className="text-xs text-ui-fg-muted capitalize">{d.type}</div>
-            <div className="text-xl font-bold text-ui-fg-base mt-1">{d.count.toLocaleString()}</div>
-            <div className="text-xs text-ui-fg-muted">{pct.toFixed(1)}%</div>
+          <div key={d.type} className="rounded-lg border border-ui-border-base bg-ui-bg-subtle p-3 sm:p-4">
+            <Text size="small" className="text-ui-fg-muted capitalize">{labels[d.type] || d.type}</Text>
+            <div className="text-xl sm:text-2xl font-semibold tabular-nums text-ui-fg-base mt-1">{d.count.toLocaleString()}</div>
+            <Text size="small" className="text-ui-fg-muted">{pct.toFixed(1)}%</Text>
+            <div className="mt-2 h-1 bg-ui-bg-base rounded-full overflow-hidden">
+              <div className="h-full bg-ui-fg-interactive rounded-full" style={{ width: `${pct}%` }} />
+            </div>
           </div>
         )
       })}

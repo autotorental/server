@@ -10,8 +10,10 @@ export default defineConfig({
     react(),
     mercurDashboardPlugin({
       medusaConfigPath: "../../packages/api/medusa-config.ts",
-      backendUrl: "https://api.autotorental.com",
+      backendUrl: "https://seller.autotorental.com",
       base: FORCE_BASE,
+      name: "Auto to Rental",
+      logo: `${FORCE_BASE}/favicon.svg`,
     } as any),
     // Force __BASE__ override AFTER Mercur plugin (which sets it to "/" because medusa-config modules is an array)
     {

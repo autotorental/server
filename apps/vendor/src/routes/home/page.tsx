@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react"
 import type { RouteConfig } from "@mercurjs/dashboard-sdk"
 import { SingleColumnPage } from "@mercurjs/dashboard-shared"
-import { Container, Heading, Text, Button, Badge } from "@medusajs/ui"
-import { House, Sparkles, ChartBar, Megaphone } from "@medusajs/icons"
+import { Container, Heading, Text, Button } from "@medusajs/ui"
+import { House, Sparkles, ChartBar } from "@medusajs/icons"
 import { VisitorGlobe } from "../../components/visitor-globe"
+import { API } from "../../lib/api"
 
 export const config: RouteConfig = { label: "Home", icon: House, nested: "/" }
-
-const API = "https://api.autotorental.com"
 
 const Page = () => {
   const [stats, setStats] = useState<any>(null)
@@ -61,7 +60,7 @@ const Page = () => {
             { icon: "📊", label: "Last 30 days", value: grand, color: "from-slate-600 to-slate-800" },
             { icon: "📞", label: "Phone Calls", value: totals.call || 0, color: "from-emerald-500 to-emerald-700" },
             { icon: "💬", label: "WhatsApp", value: totals.whatsapp || 0, color: "from-green-500 to-green-700" },
-            { icon: "🌍", label: "Free Int'l", value: totals.webrtc || 0, color: "from-amber-500 to-orange-600" },
+            { icon: "🌍", label: "Free Call", value: totals.webrtc || 0, color: "from-amber-500 to-orange-600" },
             { icon: "👥", label: "Followers", value: followerCount, color: "from-pink-500 to-rose-600" },
           ].map((c, i) => (
             <div key={i} className={`rounded-2xl p-4 text-white bg-gradient-to-br ${c.color} shadow-lg`}>
@@ -85,6 +84,8 @@ const Page = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
             { icon: "🚗", title: "Add a new vehicle", desc: "Upload photos, set prices, contact info.", href: "/rental/vehicles?new=1" },
+            { icon: "🏢", title: "Store profile", desc: "Banner, logo, description, contact details.", href: "/rental/settings/store" },
+            { icon: "📜", title: "Trade license", desc: "Upload license for admin verification.", href: "/rental/settings/trade-license" },
             { icon: "🎁", title: "Run a promotion", desc: "Discount % or specific sale price.", href: "/rental/promotions" },
             { icon: "👥", title: "See your followers", desc: "Customers who follow your company.", href: "/rental/followers" },
             { icon: "📈", title: "Detailed analytics", desc: "Chart, heatmap, top vehicles, sources.", href: "/rental/analytics" },

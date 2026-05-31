@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react"
 import createGlobe from "cobe"
 
-const API = "https://api.autotorental.com"
+import { API } from "../lib/api"
 
 // Country code → [latitude, longitude] (capital city)
 const COUNTRY_COORDS: Record<string, [number, number]> = {

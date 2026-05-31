@@ -33,6 +33,7 @@ export const Vehicle = model.define("vehicle", {
   whatsapp_number: model.text().nullable(),
   livekit_enabled: model.boolean().default(false),
   photos: model.json().nullable(),
+  videos: model.json().nullable(),
   feature_ids: model.json().nullable(),
   status: model.enum(["draft","pending_approval","active","rejected","paused","rented","unavailable"]).default("pending_approval").index(),
   rejection_reason: model.enum(["wrong_details","photos_unclear","wrong_price","missing_info","duplicate","inappropriate","spam","fake","other"]).nullable(),

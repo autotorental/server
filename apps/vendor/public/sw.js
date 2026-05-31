@@ -1,4 +1,4 @@
-const CACHE = "atr-vendor-v1"
+const CACHE = "atr-vendor-v3"
 self.addEventListener("install", (e) => { self.skipWaiting() })
 self.addEventListener("activate", (e) => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))))
@@ -14,12 +14,14 @@ self.addEventListener("fetch", (e) => {
     return
   }
   if (/\.(js|css|woff2?|png|svg|jpg|jpeg|webp|ico)$/i.test(url.pathname)) {
+    // Network-first: always try to fetch the latest asset, fall back to cache
+    // only when offline. Prevents serving a stale build (which caused the
+    // dashboard redirect loop).
     e.respondWith(
       caches.open(CACHE).then(cache =>
-        cache.match(req).then(cached => {
-          const p = fetch(req).then(res => { cache.put(req, res.clone()); return res }).catch(() => cached)
-          return cached || p
-        })
+        fetch(req)
+          .then(res => { cache.put(req, res.clone()); return res })
+          .catch(() => cache.match(req))
       )
     )
   }

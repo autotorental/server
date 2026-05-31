@@ -10,7 +10,7 @@ export default async function authPasswordResetHandler({
   const resetUrl =
     data.actor_type === "user"
       ? `https://admin.autotorental.com/dashboard/reset-password?token=${data.token}&email=${encodeURIComponent(data.entity_id)}`
-      : `https://seller.autotorental.com/seller/reset-password?token=${data.token}&email=${encodeURIComponent(data.entity_id)}`
+      : `https://seller.autotorental.com/rental/reset-password?token=${data.token}&email=${encodeURIComponent(data.entity_id)}`
 
   const productName = data.actor_type === "user" ? "Auto Rental Admin" : "Auto Rental Seller Portal"
 

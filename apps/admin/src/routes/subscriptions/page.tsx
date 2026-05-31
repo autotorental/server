@@ -3,10 +3,9 @@ import type { RouteConfig } from "@mercurjs/dashboard-sdk"
 import { SingleColumnPage } from "@mercurjs/dashboard-shared"
 import { Container, Heading, Text, Table, Badge, Button, Input, Label, Select, FocusModal } from "@medusajs/ui"
 import { CurrencyDollar, Clock, CheckCircle, XCircleSolid, PencilSquare } from "@medusajs/icons"
+import { API } from "../../lib/api"
 
 export const config: RouteConfig = { label: "Subscriptions", icon: CurrencyDollar }
-
-const API = "https://api.autotorental.com"
 
 type Sub = {
   id: string
@@ -88,7 +87,7 @@ const ManageModal = ({ sub, onClose, onSaved }: { sub: Sub; onClose: () => void;
       </div>
 
       <div className="flex flex-wrap justify-between gap-2 pt-4 border-t">
-        <Button variant="danger" onClick={cancel} disabled={saving}>Cancel Subscription</Button>
+        <Button variant="danger" onClick={cancel} disabled={saving}>Cancel and Delete</Button>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={onClose}>Close</Button>
           <Button disabled={saving} onClick={markPaid}>{saving ? "Saving…" : "Mark as Paid & Extend"}</Button>
@@ -105,7 +104,7 @@ const Page = () => {
   const load = () => {
     setLoading(true)
     fetch(`${API}/admin/subscriptions`, { credentials: "include" })
-      .then(r => r.json()).then(d => setRows(d.subscriptions || [])).finally(() => setLoading(false))
+      .then(r => r.json()).then(d => setRows(d.subscriptions || [])).catch(() => setRows([])).finally(() => setLoading(false))
   }
   useEffect(load, [])
 

@@ -7,7 +7,8 @@ function getSellerId(req: MedusaRequest): string | null {
 }
 
 const ALLOWED = new Set([
-  "name","handle","description","email","photo",
+  "name","handle","description","email",
+  "logo","banner","website_url",
   "company_phone","company_whatsapp","company_address",
   "company_location_lat","company_location_lng",
   "default_city_id",
@@ -29,6 +30,19 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   for (const k of Object.keys(body || {})) {
     if (ALLOWED.has(k)) update[k] = body[k]
   }
+  // Empty strings are not valid for nullable date/reference columns — coerce to NULL.
+  for (const k of ["trade_license_expiry", "default_city_id"]) {
+    if (update[k] === "") update[k] = null
+  }
+  const pg: any = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
+
+  // Merge metadata jsonb so store-facing fields (location, city) stay visible.
+  if (body && typeof body.metadata === "object" && body.metadata) {
+    const existingRows = await pg("seller").where({ id: sid }).select("metadata")
+    const existing = (existingRows[0]?.metadata as Record<string, any>) || {}
+    update.metadata = { ...existing, ...body.metadata }
+  }
+
   // If a seller updates trade-license fields, reset verification — admin must re-approve
   if (update.trade_license_url || update.trade_license_number || update.trade_license_expiry) {
     update.trade_license_verified = false
@@ -36,7 +50,6 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     update.trade_license_rejection_reason = null
   }
   update.updated_at = new Date()
-  const pg: any = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
   await pg("seller").where({ id: sid }).update(update)
   const rows = await pg("seller").where({ id: sid }).select("*")
   res.json({ seller: rows[0] })

@@ -1,5 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { excludeBots } from "../../../../lib/bot-filter"
 
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const knex: any = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
@@ -15,7 +16,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     .count("* as count")
     .whereNull("deleted_at")
     .whereBetween("created_at", [from, to])
-    .modify((qb: any) => { if (q.seller_id) qb.where("seller_id", q.seller_id); if (q.event_type && q.event_type !== "all") qb.where("event_type", q.event_type) })
+    .modify((qb: any) => { excludeBots(qb, "user_agent"); if (q.seller_id) qb.where("seller_id", q.seller_id); if (q.event_type && q.event_type !== "all") qb.where("event_type", q.event_type) })
     .groupBy("event_type")
 
   // Per-vendor breakdown — LEFT JOIN to seller for the company name
@@ -25,7 +26,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     .count("* as count")
     .whereNull("ce.deleted_at")
     .whereBetween("ce.created_at", [from, to])
-    .modify((qb: any) => { if (q.seller_id) qb.where("ce.seller_id", q.seller_id); if (q.event_type && q.event_type !== "all") qb.where("ce.event_type", q.event_type) })
+    .modify((qb: any) => { excludeBots(qb, "ce.user_agent"); if (q.seller_id) qb.where("ce.seller_id", q.seller_id); if (q.event_type && q.event_type !== "all") qb.where("ce.event_type", q.event_type) })
     .groupBy("ce.seller_id", "ce.event_type", "s.name", "s.handle")
 
   // Aggregate per vendor
@@ -51,7 +52,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     .count("* as count")
     .whereNull("ce.deleted_at")
     .whereBetween("ce.created_at", [from, to])
-    .modify((qb: any) => { if (q.seller_id) qb.where("ce.seller_id", q.seller_id); if (q.event_type && q.event_type !== "all") qb.where("ce.event_type", q.event_type) })
+    .modify((qb: any) => { excludeBots(qb, "ce.user_agent"); if (q.seller_id) qb.where("ce.seller_id", q.seller_id); if (q.event_type && q.event_type !== "all") qb.where("ce.event_type", q.event_type) })
     .groupBy("ce.product_id", "ce.seller_id", "ce.event_type", "s.name", "p.title")
     .orderBy("count", "desc")
     .limit(30)

@@ -1,5 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { CATALOG_MODULE } from "../../../modules/catalog"
+import { notifyFollowers } from "../../../lib/follower-notify"
 
 function getSellerId(req: MedusaRequest): string | null {
   const auth = (req as any).auth_context
@@ -60,5 +61,25 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     return update
   })
   await svc.updateVehicles(updates)
+
+  if (!body.clear) {
+    for (const v of vehicles) {
+      const patch = updates.find((u: any) => u.id === v.id)
+      if (!patch) continue
+      const merged = { ...v, ...patch }
+      const oldDaily = v.daily_price
+      const newDaily = merged.sale_daily_price ?? merged.daily_price
+      const hasOffer =
+        patch.discount_percent != null ||
+        patch.sale_daily_price != null ||
+        patch.discount_label
+      if (hasOffer && oldDaily && newDaily && newDaily < oldDaily) {
+        void notifyFollowers(req.scope, sellerId, merged, "price_drop", oldDaily).catch((e: any) =>
+          console.error("[follower-notify] promotion:", e?.message || e)
+        )
+      }
+    }
+  }
+
   res.json({ updated: updates.length, vehicle_ids: ownedIds })
 }

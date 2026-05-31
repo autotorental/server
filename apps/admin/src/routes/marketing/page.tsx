@@ -3,10 +3,9 @@ import type { RouteConfig } from "@mercurjs/dashboard-sdk"
 import { SingleColumnPage } from "@mercurjs/dashboard-shared"
 import { Container, Heading, Text, Table, Badge, Button, Input } from "@medusajs/ui"
 import { ArrowUpRightOnBox, ArrowDownTray, BoltSolid } from "@medusajs/icons"
+import { API } from "../../lib/api"
 
 export const config: RouteConfig = { label: "Marketing", icon: BoltSolid }
-
-const API = "https://api.autotorental.com"
 
 const EXTERNAL_TOOLS = [
   { name: "Google Analytics", url: "https://analytics.google.com", desc: "Page views, audience, traffic sources", logo: "📊", bg: "bg-amber-50 dark:bg-amber-950" },

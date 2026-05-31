@@ -1,8 +1,7 @@
 // Helper: notify all followers of a seller about a new car or price drop.
 // Fire-and-forget — caller does NOT await.
-import { Resend } from "resend"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
-import { getSetting } from "./settings"
+import { sendEmail, isEmailConfiguredForScope } from "./email"
 
 type V = {
   id: string
@@ -12,6 +11,8 @@ type V = {
   currency_code?: string | null
   daily_price?: number | null
   sale_daily_price?: number | null
+  brand_id?: string | null
+  city_id?: string | null
   city_name?: string | null
   brand_name?: string | null
 }
@@ -96,9 +97,8 @@ export async function notifyFollowers(
 ): Promise<{ sent: number; skipped: number }> {
   let sent = 0, skipped = 0
   try {
-    const apiKey = await getSetting(scope, "resend_api_key")
-    const from = (await getSetting(scope, "resend_from_email")) || "Auto to Rental <updates@autotorental.com>"
-    if (!apiKey) { return { sent: 0, skipped: 0 } }
+    const from = process.env.ZOHO_FROM || process.env.SMTP_FROM || process.env.RESEND_FROM || "Auto to Rental <updates@autotorental.com>"
+    if (!(await isEmailConfiguredForScope(scope))) { return { sent: 0, skipped: 0 } }
 
     const pg: any = scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
 
@@ -126,7 +126,6 @@ export async function notifyFollowers(
       }
     } catch {}
 
-    const resend = new Resend(apiKey)
     const html = emailHTML(kind, vehicle, { id: seller.id, name: seller.name, handle: seller.handle, logo: seller.logo }, oldPrice)
     const subject = kind === "price_drop"
       ? `💸 Price drop: ${vehicle.title}`
@@ -134,9 +133,10 @@ export async function notifyFollowers(
 
     for (const f of followers) {
       try {
-        await resend.emails.send({
+        await sendEmail({
+          scope,
           from,
-          to: [f.follower_email],
+          to: f.follower_email,
           subject,
           html,
         })

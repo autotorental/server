@@ -1,5 +1,7 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { CATALOG_MODULE } from "../../../../../modules/catalog"
+import { removeVehicleFromSearch } from "../../../../../lib/vehicle-meili"
+
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   const svc: any = req.scope.resolve(CATALOG_MODULE)
   const body = req.body as any
@@ -12,5 +14,6 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     rejected_at: new Date(),
     approved_at: null,
   }])
+  try { await removeVehicleFromSearch(req.params.id) } catch { /* optional */ }
   res.json({ vehicle: v })
 }

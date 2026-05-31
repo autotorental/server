@@ -3,10 +3,10 @@ import type { RouteConfig } from "@mercurjs/dashboard-sdk"
 import { SingleColumnPage } from "@mercurjs/dashboard-shared"
 import { Container, Heading, Text, Table, Badge, Button, Select, Textarea } from "@medusajs/ui"
 import { ExclamationCircle, Trash } from "@medusajs/icons"
+import { API } from "../../lib/api"
 
 export const config: RouteConfig = { label: "Reports", icon: ExclamationCircle }
 
-const API = "https://api.autotorental.com"
 type Report = any
 const REASON_LABELS: Record<string, string> = {
   wrong_info: "Wrong info", price_wrong: "Wrong price", already_rented: "Already rented out",
@@ -23,7 +23,7 @@ const Page = () => {
   const load = () => {
     setLoading(true)
     const url = filter === "all" ? `${API}/admin/reports` : `${API}/admin/reports?status=${filter}`
-    fetch(url, { credentials: "include" }).then(r => r.json()).then(d => setItems(d.reports || [])).finally(() => setLoading(false))
+    fetch(url, { credentials: "include" }).then(r => r.json()).then(d => setItems(d.reports || [])).catch(() => setItems([])).finally(() => setLoading(false))
   }
   useEffect(load, [filter])
 
@@ -76,7 +76,7 @@ const Page = () => {
                 <Table.Cell className="max-w-xs truncate">{r.description || "—"}</Table.Cell>
                 <Table.Cell>
                   <Select value={r.status} onValueChange={(v) => updateStatus(r.id, v)}>
-                    <Select.Trigger><Badge color={STATUS_COLORS[r.status] || "grey"}>{r.status}</Badge></Select.Trigger>
+                    <Select.Trigger className="h-auto w-auto gap-x-1 rounded-md border-0 bg-transparent px-1 py-0 shadow-none hover:bg-ui-bg-base-hover focus-visible:shadow-none data-[state=open]:!shadow-none [&>svg]:text-ui-fg-muted"><Badge color={STATUS_COLORS[r.status] || "grey"} className="capitalize">{r.status}</Badge></Select.Trigger>
                     <Select.Content>
                       <Select.Item value="open">🔴 Open</Select.Item>
                       <Select.Item value="reviewing">🟡 Reviewing</Select.Item>

@@ -3,12 +3,13 @@
 // Merges into seller.metadata.social (JSONB).
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { resolveSellerByParam } from "../../../../../lib/resolve-seller"
 
 const ALLOWED = ["facebook", "instagram", "tiktok", "youtube", "whatsapp", "website", "twitter", "telegram", "snapchat"] as const
 
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   const pg: any = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
-  const seller = await pg("seller").where({ id: req.params.id }).first()
+  const seller = await resolveSellerByParam(pg, req.params.id)
   if (!seller) return res.status(404).json({ message: "Seller not found" })
 
   const body = (req.body || {}) as Record<string, string>
@@ -23,7 +24,7 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     }
   }
   const nextMetadata = { ...current, social: nextSocial }
-  await pg("seller").where({ id: req.params.id }).update({
+  await pg("seller").where({ id: seller.id }).update({
     metadata: JSON.stringify(nextMetadata),
     updated_at: new Date(),
   })
@@ -33,7 +34,7 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
 // GET /admin/sellers/:id/socials — convenience read
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const pg: any = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
-  const seller = await pg("seller").where({ id: req.params.id }).first()
+  const seller = await resolveSellerByParam(pg, req.params.id)
   if (!seller) return res.status(404).json({ message: "Seller not found" })
   const social = seller.metadata?.social || {}
   res.json({ social })

@@ -3,33 +3,43 @@ import { DashboardModuleOptions } from "@mercurjs/types"
 import path from "path"
 loadEnv(process.env.NODE_ENV || "development", process.cwd())
 
+const isProd = process.env.NODE_ENV === "production"
+if (isProd && (!process.env.JWT_SECRET || process.env.JWT_SECRET === "supersecret")) {
+  throw new Error("JWT_SECRET must be set to a strong value in production")
+}
+if (isProd && (!process.env.COOKIE_SECRET || process.env.COOKIE_SECRET === "supersecret")) {
+  throw new Error("COOKIE_SECRET must be set to a strong value in production")
+}
+
 module.exports = defineConfig({
   admin: {
     disable: true
   },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
+    sessionOptions: {
+      name: "connect.sid",
+      resave: false,
+      rolling: false,
+      saveUninitialized: false,
+      ttl: 10 * 60 * 60 * 1000,
+    },
     http: {
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
       authCors: process.env.AUTH_CORS!,
       // @ts-expect-error: vendorCors is not defined in medusa config module
       vendorCors: process.env.VENDOR_CORS!,
-      jwtSecret: process.env.JWT_SECRET || "supersecret",
-      cookieSecret: process.env.COOKIE_SECRET || "supersecret",
-      sessionOptions: {
-        name: "connect.sid",
-        resave: false,
-        rolling: false,
-        saveUninitialized: false,
-        cookie: {
-          sameSite: "none" as const,
-          secure: true,
-          httpOnly: true,
-          domain: ".autotorental.com",
-        }
-      },
-    }
+      jwtSecret: process.env.JWT_SECRET!,
+      cookieSecret: process.env.COOKIE_SECRET!,
+    },
+    cookieOptions: {
+      sameSite: "lax" as const,
+      secure: true,
+      httpOnly: true,
+      domain: ".autotorental.com",
+    },
   },
   featureFlags: {
     rbac: true,
@@ -62,8 +72,9 @@ module.exports = defineConfig({
             id: "resend",
             options: {
               channels: ["email"],
-              api_key: process.env.RESEND_API_KEY,
-              from: process.env.RESEND_FROM || "no-reply@autotorental.com",
+              from:
+                process.env.ZOHO_FROM ||
+                "Auto to Rental <info@autotorental.com>",
             },
           },
           {

@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     mercurDashboardPlugin({
       medusaConfigPath: "../../packages/api/medusa-config.ts",
-      backendUrl: "https://api.autotorental.com",
+      backendUrl: "https://admin.autotorental.com",
       base: FORCE_BASE,
     } as any),
     {

@@ -4,8 +4,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Container, Heading, Text, Button, Input, Label, Select, Badge } from "@medusajs/ui"
-
-const API = "https://api.autotorental.com"
+import { API } from "../../lib/api"
 
 type City = { id: string; country_code: string; name: string }
 
@@ -106,8 +105,6 @@ const Page = () => {
       if (!sellerRes.ok) {
         throw new Error(sellerData.message || "Failed to create company profile")
       }
-      const sellerId = sellerData.seller?.id
-
       // Step 3 — write our extended fields via our custom /vendor/profile endpoint.
       // We need a session cookie for credentials:include, so login the seller now.
       await fetch(`${API}/auth/seller/emailpass`, {

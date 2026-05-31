@@ -1,6 +1,7 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { CATALOG_MODULE } from "../../../../../modules/catalog"
+import { startCallRecording } from "../../../../../lib/egress"
 
 function getSellerId(req: MedusaRequest): string | null {
   const auth = (req as any).auth_context
@@ -24,6 +25,13 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
 
   // Update status to active
   await pg("vendor_call").where({ id: callId }).update({ status: "active", updated_at: new Date() })
+
+  void (async () => {
+    const rec = await startCallRecording(call.room_name, callId)
+    if (rec) {
+      await pg("vendor_call").where({ id: callId }).update({ egress_id: rec.egressId, recording_file: rec.file, updated_at: new Date() })
+    }
+  })()
 
   // Get LiveKit token from the token server
   const identity = "vendor-" + sellerId.slice(-8)

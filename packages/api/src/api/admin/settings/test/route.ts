@@ -1,27 +1,35 @@
 // POST /admin/settings/test
-// Body: { service: "resend" | "stripe" | "facebook" | "instagram" | "google_business" | "openai" | "dataforseo", to?: string }
+// Body: { service: "email" | "stripe" | "facebook" | "instagram" | "google_business" | "openai" | "dataforseo", to?: string }
 // Returns { ok, message, details? }
 
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
+import { isEmailConfiguredForScope, sendEmail } from "../../../../lib/email"
 import { getSetting } from "../../../../lib/settings"
 
-type Service = "resend" | "stripe" | "facebook" | "instagram" | "google_business" | "openai" | "dataforseo"
+type Service = "email" | "stripe" | "facebook" | "instagram" | "google_business" | "openai" | "dataforseo"
 
-async function testResend(scope: any, to?: string) {
-  const apiKey = await getSetting(scope, "resend_api_key")
-  const from = (await getSetting(scope, "resend_from_email")) || "Auto to Rental <updates@autotorental.com>"
-  if (!apiKey) return { ok: false, message: "No Resend API key set" }
+async function testEmail(_scope: any, to?: string) {
+  const from =
+    (await getSetting(_scope, "zoho_from_email")) ||
+    process.env.ZOHO_FROM ||
+    "Auto to Rental <info@autotorental.com>"
+  if (!(await isEmailConfiguredForScope(_scope))) {
+    return {
+      ok: false,
+      message:
+        "Zoho Mail SMTP not ready — save Zoho App Password in Integrations → Email (field: zoho_smtp_pass), then Save.",
+    }
+  }
   if (!to) return { ok: false, message: "Provide a 'to' email in the request body" }
   try {
-    const { Resend } = await import("resend")
-    const resend = new Resend(apiKey)
-    const r = await resend.emails.send({
+    const r = await sendEmail({
+      scope: _scope,
       from, to: [to],
-      subject: "✅ Auto to Rental — Resend test",
-      html: `<div style="font-family:sans-serif;padding:24px"><h2 style="color:#1753b0">Your Resend integration works!</h2><p>If you received this email, the Resend API key configured in Auto to Rental admin is valid and emails will be delivered to followers when sellers list new cars or drop prices.</p><p style="color:#64748b;font-size:13px">Sent from <strong>${from}</strong> at ${new Date().toISOString()}</p></div>`,
+      subject: "✅ Auto to Rental — email test",
+      html: `<div style="font-family:sans-serif;padding:24px"><h2 style="color:#1753b0">Zoho Mail SMTP — production test</h2><p>If you received this, outbound mail from <strong>info@autotorental.com</strong> works for password resets and follower alerts.</p><p style="color:#64748b;font-size:13px">Sent from <strong>${from}</strong> at ${new Date().toISOString()}</p></div>`,
     })
-    return { ok: true, message: `Test email sent to ${to}`, details: { id: r.data?.id, from } }
-  } catch (e: any) { return { ok: false, message: e.message || "Resend send failed" } }
+    return { ok: true, message: `Test email sent to ${to}`, details: { id: r.id, from } }
+  } catch (e: any) { return { ok: false, message: e.message || "SMTP send failed" } }
 }
 
 async function testStripe(scope: any) {
@@ -102,7 +110,7 @@ async function testDataForSEO(scope: any) {
 }
 
 const HANDLERS: Record<Service, (scope: any, ...args: any[]) => Promise<any>> = {
-  resend: testResend,
+  email: testEmail,
   stripe: testStripe,
   facebook: testFacebook,
   instagram: testInstagram,

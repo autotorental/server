@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import type { RouteConfig } from "@mercurjs/dashboard-sdk"
 import { SingleColumnPage } from "@mercurjs/dashboard-shared"
 import { Container, Heading, Text, Table, Badge, Button, Input, Label, Select, Checkbox, FocusModal } from "@medusajs/ui"
 import { Bolt } from "@medusajs/icons"
+import { API } from "../../lib/api"
+import { TableCell } from "../../lib/table-cell"
 
 export const config: RouteConfig = { label: "Promotions", icon: Bolt, rank: 3 }
-
-const API = "https://api.autotorental.com"
 type Vehicle = any
 
 const PromotionsPage = () => {
@@ -22,6 +22,7 @@ const PromotionsPage = () => {
   const [label, setLabel] = useState("Special Offer")
   const [endsAt, setEndsAt] = useState("")
   const [saving, setSaving] = useState(false)
+  const [applyError, setApplyError] = useState("")
 
   const load = () => {
     setLoading(true)
@@ -43,6 +44,7 @@ const PromotionsPage = () => {
   const apply = async () => {
     if (selected.size === 0) return
     setSaving(true)
+    setApplyError("")
     try {
       const body: any = { vehicle_ids: Array.from(selected) }
       if (mode === "percent") {
@@ -57,12 +59,18 @@ const PromotionsPage = () => {
         body.clear = true
       }
       if (endsAt && mode !== "clear") body.ends_at = new Date(endsAt).toISOString()
-      await fetch(`${API}/vendor/promotions`, {
+      const res = await fetch(`${API}/vendor/promotions`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error(d.message || d.hint || `Request failed (${res.status})`)
+      }
       setShowModal(false); setSelected(new Set()); load()
+    } catch (e: any) {
+      setApplyError(e?.message || "Could not apply changes. Please try again.")
     } finally { setSaving(false) }
   }
 
@@ -92,8 +100,8 @@ const PromotionsPage = () => {
             <Table.HeaderCell>Ends</Table.HeaderCell>
           </Table.Row></Table.Header>
           <Table.Body>
-            {loading && <Table.Row><Table.Cell colSpan={7}>Loading…</Table.Cell></Table.Row>}
-            {!loading && vehicles.length === 0 && <Table.Row><Table.Cell colSpan={7} className="text-center py-8 text-ui-fg-muted">No vehicles yet — add one from the Vehicles page.</Table.Cell></Table.Row>}
+            {loading && <Table.Row><TableCell colSpan={7}>Loading…</TableCell></Table.Row>}
+            {!loading && vehicles.length === 0 && <Table.Row><TableCell colSpan={7} className="text-center py-8 text-ui-fg-muted">No vehicles yet — add one from the Vehicles page.</TableCell></Table.Row>}
             {vehicles.map((v: any) => (
               <Table.Row key={v.id}>
                 <Table.Cell><Checkbox checked={selected.has(v.id)} onCheckedChange={() => toggle(v.id)} /></Table.Cell>
@@ -162,6 +170,9 @@ const PromotionsPage = () => {
                 </>
               )}
 
+              {applyError && (
+                <Text className="text-ui-fg-error text-sm" role="alert">{applyError}</Text>
+              )}
               <div className="flex justify-end gap-2 pt-2 border-t">
                 <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
                 <Button onClick={apply} disabled={saving}>{saving ? "Applying..." : "Apply"}</Button>

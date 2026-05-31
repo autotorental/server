@@ -1,11 +1,10 @@
 // POST /admin/inbox/compose
 // Body: { to, subject, text, html?, log_in_inbox? }
-// Sends a fresh email via Resend, with the API key sourced from app_setting (falls back to env).
+// Sends a fresh email via SMTP (Zoho-compatible).
 
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
-import { Resend } from "resend"
-import { getSetting } from "../../../../lib/settings"
+import { isEmailConfiguredForScope, sendEmail } from "../../../../lib/email"
 
 function newId() {
   return "es_" + Math.random().toString(36).slice(2, 14) + Date.now().toString(36)
@@ -34,12 +33,10 @@ function wrapHtml(body: string, recipientName: string): string {
 }
 
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
-  const apiKey = (await getSetting(req.scope, "resend_api_key")) || process.env.RESEND_API_KEY || ""
-  const from = (await getSetting(req.scope, "resend_from_email")) ||
-               process.env.RESEND_FROM || "Auto to Rental <info@autotorental.com>"
-  if (!apiKey) return res.status(503).json({ message: "Resend API key not configured. Add it in Integrations." })
+  if (!(await isEmailConfiguredForScope(req.scope))) return res.status(503).json({ message: "No mail account configured. Add one in Inbox → Mail settings." })
 
   const b = req.body as any
+  const fromAccount = (b.from_account || "").trim() || undefined
   const to = (b.to || "").trim()
   const subject = (b.subject || "").trim()
   const text = (b.text || b.message || "").trim()
@@ -57,35 +54,41 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   )
 
   try {
-    const resend = new Resend(apiKey)
-    const result = await resend.emails.send({
-      from,
-      to: [to],
+    const result = await sendEmail({
+      scope: req.scope,
+      accountEmail: fromAccount,
+      to,
       subject,
       html,
       text,
-      replyTo: from,
+      replyTo: b.reply_to || undefined,
     })
+    const from = result.from || fromAccount || "info@autotorental.com"
 
     // Audit log
     const sentId = newId()
     try {
       await knex("email_sent").insert({
         id: sentId,
-        resend_id: result.data?.id || null,
+        resend_id: result.id || null,
         to_addr: to,
         from_addr: from,
         subject,
         html,
         related_message_id: null,
         sent_by: (req as any).auth_context?.actor_id || "admin",
-        status: result.data ? "sent" : "failed",
+        status: result.id ? "sent" : "failed",
       })
     } catch (e: any) { console.error("[compose] email_sent log failed:", e?.message) }
 
     // Optionally also drop a copy in contact_message so it appears in the unified inbox UI
     if (b.log_in_inbox !== false) {
       try {
+        const mailbox =
+          fromAccount ||
+          (from.match(/<(.+?)>/)?.[1]) ||
+          process.env.ZOHO_SMTP_USER ||
+          "info@autotorental.com"
         await knex("contact_message").insert({
           id: "msg_out_" + Math.random().toString(36).slice(2, 14),
           name: (to.split("@")[0] || "").replace(/[._-]/g, " ") || to,
@@ -93,8 +96,12 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
           phone: null,
           subject,
           message: text,
+          html_message: html,
           status: "sent",
           source: "outbound",
+          direction: "outbound",
+          mailbox,
+          to_addr: to,
           user_agent: null,
           ip_address: null,
           country_code: null,
@@ -104,7 +111,7 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
       } catch (e: any) { console.error("[compose] inbox log failed:", e?.message) }
     }
 
-    res.status(201).json({ ok: true, resend_id: result.data?.id, sent_id: sentId })
+    res.status(201).json({ ok: true, resend_id: result.id, sent_id: sentId })
   } catch (e: any) {
     res.status(500).json({ message: e?.message || "send failed" })
   }

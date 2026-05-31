@@ -1,11 +1,12 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { excludeBots } from "../../../../lib/bot-filter"
 
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const knex: any = req.scope.resolve(ContainerRegistrationKeys.PG_CONNECTION)
   const query = req.query as { from?: string; to?: string }
   const auth = (req as any).auth_context
-  const sellerId = auth?.actor_id || auth?.app_metadata?.seller_id
+  const sellerId = auth?.app_metadata?.seller_id || auth?.actor_id
   if (!sellerId) {
     return res.status(401).json({ message: "Unauthorized" })
   }
@@ -19,6 +20,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     .whereNull("deleted_at")
     .where("seller_id", sellerId)
     .whereBetween("created_at", [from, to])
+    .modify((q: any) => excludeBots(q))
     .groupBy("event_type")
 
   // Time series — by day
@@ -28,6 +30,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     .whereNull("deleted_at")
     .where("seller_id", sellerId)
     .whereBetween("created_at", [from, to])
+    .modify((q: any) => excludeBots(q))
     .groupBy("day", "event_type")
     .orderBy("day")
 
@@ -38,6 +41,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     .whereNull("deleted_at")
     .where("seller_id", sellerId)
     .whereBetween("created_at", [from, to])
+    .modify((q: any) => excludeBots(q))
     .groupBy("product_id", "event_type")
     .orderBy("count", "desc")
     .limit(10)

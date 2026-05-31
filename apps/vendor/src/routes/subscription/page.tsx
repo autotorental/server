@@ -3,10 +3,9 @@ import type { RouteConfig } from "@mercurjs/dashboard-sdk"
 import { SingleColumnPage } from "@mercurjs/dashboard-shared"
 import { Container, Heading, Text, Button, Badge } from "@medusajs/ui"
 import { CreditCardSolid, CheckCircleSolid } from "@medusajs/icons"
+import { API } from "../../lib/api"
 
 export const config: RouteConfig = { label: "Subscription", icon: CreditCardSolid, nested: "/settings" }
-
-const API = "https://api.autotorental.com"
 
 type Sub = {
   status?: string
