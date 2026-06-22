@@ -1,0 +1,16 @@
+{
+  "name": "Auto to Rental — Vendor Portal",
+  "short_name": "Auto to Rental",
+  "description": "Auto to Rental vendor portal — list vehicles, manage promotions, see analytics.",
+  "start_url": "/rental/",
+  "scope": "/rental/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#1753b0",
+  "icons": [
+    { "src": "/rental/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/rental/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/rental/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

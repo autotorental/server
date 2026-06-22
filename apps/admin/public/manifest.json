@@ -1,0 +1,14 @@
+{
+  "name": "Auto to Rental Admin",
+  "short_name": "ATR Admin",
+  "description": "Auto to Rental admin dashboard — manage vehicles, sellers, analytics, integrations.",
+  "start_url": "/dashboard/",
+  "scope": "/dashboard/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f1729",
+  "theme_color": "#1753b0",
+  "icons": [
+    { "src": "/dashboard/favicon.png", "sizes": "256x256", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

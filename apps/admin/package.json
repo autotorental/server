@@ -1,0 +1,27 @@
+{
+  "name": "@acme/admin",
+  "private": true,
+  "version": "2.1.2",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 7000",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview --port 7000"
+  },
+  "dependencies": {
+    "@acme/api": "*",
+    "@mercurjs/admin": "2.1.2",
+    "d3-geo": "^3.1.1",
+    "i18next": "^26.2.0",
+    "livekit-client": "^2.19.1",
+    "rrweb": "2",
+    "rrweb-player": "^2.0.1",
+    "topojson-client": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/d3-geo": "^3.1.0",
+    "@types/node": "^24.10.1",
+    "@types/topojson-client": "^3.1.5"
+  }
+}

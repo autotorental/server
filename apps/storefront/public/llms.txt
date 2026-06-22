@@ -1,0 +1,52 @@
+# Auto to Rental
+
+> Auto to Rental is an international multi-vendor car rental marketplace that connects travelers and residents directly with verified rental companies — with ZERO platform commission. Browse thousands of cars, compare daily, weekly and monthly rates, and contact rental companies directly by phone, WhatsApp or free in-app voice/video call. Available in 7 languages and 13 currencies, serving the UAE, Syria and a growing list of countries.
+
+## What makes Auto to Rental different
+- **Zero commission, direct contact.** The price you see is the price you pay. Customers reach rental companies directly — no middleman, no booking fees.
+- **Verified companies only.** Every rental company is reviewed and verified (trade license + identity) before going live, shown with a green verified badge.
+- **Multi-vendor marketplace.** Hundreds of independent rental companies list their fleets in one place, so customers compare across the whole market.
+- **Car videos & live calls.** Many cars have short videos; customers can voice/video-call the company free inside the app to see the car live before renting.
+- **Multilingual & multi-currency.** The entire site is available in English, Arabic, Spanish, Chinese, Thai, Russian and Urdu, with prices in 13 currencies.
+
+## How it works
+1. Browse or search cars by brand, city, body type, and daily/weekly/monthly budget.
+2. Open a car to see photos, specs, price and the rental company.
+3. Contact the company directly via phone, WhatsApp, or free in-app call — no commission, no booking fee.
+4. Agree terms and rent directly with the verified company.
+
+## Key Pages
+- [Browse all cars](https://autotorental.com/cars): Search and filter the full fleet by brand, city, body type and price.
+- [Rental companies](https://autotorental.com/companies): Directory of verified rental companies with reviews and contact details.
+- [Platform features](https://autotorental.com/features): Everything the platform offers for renters and for rental companies.
+- [Brands](https://autotorental.com/brands): Browse rental cars by manufacturer.
+- [Car Rental Dubai](https://autotorental.com/car-rental-dubai): Dubai car-rental landing page.
+- [Dubai Airport car rental](https://autotorental.com/car-rental-dubai-airport): Pick-up and drop-off at Dubai International Airport (DXB).
+- [Monthly car rental Dubai](https://autotorental.com/monthly-car-rental-dubai): Long-term monthly rental deals.
+- [Weekly car rental Dubai](https://autotorental.com/weekly-car-rental-dubai): Weekly rental rates.
+
+## Popular brands
+- [Toyota](https://autotorental.com/cars/brand/toyota), [Mercedes-Benz](https://autotorental.com/cars/brand/mercedes-benz), [BMW](https://autotorental.com/cars/brand/bmw), [Nissan](https://autotorental.com/cars/brand/nissan), [Audi](https://autotorental.com/cars/brand/audi), [Lexus](https://autotorental.com/cars/brand/lexus), [Range Rover](https://autotorental.com/cars/brand/land-rover), [Bentley](https://autotorental.com/cars/brand/bentley), [Rolls-Royce](https://autotorental.com/cars/brand/rolls-royce), [Lamborghini](https://autotorental.com/cars/brand/lamborghini), [Ferrari](https://autotorental.com/cars/brand/ferrari). Full list: https://autotorental.com/brands
+
+## Popular cities
+- [Dubai](https://autotorental.com/cars/city/dubai), [Abu Dhabi](https://autotorental.com/cars/city/abu-dhabi), [Sharjah](https://autotorental.com/cars/city/sharjah), [Damascus](https://autotorental.com/cars/city/damascus), [Aleppo](https://autotorental.com/cars/city/aleppo).
+
+## For rental companies
+- [List your fleet](https://autotorental.com/list-your-car): Free to join, zero commission. Includes traffic analytics, paid ads, a custom domain, follower notifications, car import and more.
+
+## Company
+- [About us](https://autotorental.com/about): Who we are and how the marketplace works.
+- [Contact](https://autotorental.com/contact): Get in touch with the Auto to Rental team.
+- [Help center](https://autotorental.com/help): Frequently asked questions and support.
+- [Blog](https://autotorental.com/blog): Guides, tips and news about car rental.
+
+## Legal
+- [Terms of Service](https://autotorental.com/terms)
+- [Privacy Policy](https://autotorental.com/privacy)
+- [Cookie Policy](https://autotorental.com/cookies)
+
+## Notes
+- Languages: English, Arabic (/ar), Spanish (/es), Chinese (/zh), Thai (/th), Russian (/ru), Urdu (/ur) — locale prefix in the path.
+- No booking commission: customers contact rental companies directly via phone, WhatsApp or free in-app call.
+- Full catalogue and fresh listings: https://autotorental.com/sitemap.xml
+- Fuller AI-readable overview: https://autotorental.com/llms-full.txt

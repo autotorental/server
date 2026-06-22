@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Auto to Rental — Profit Calculator</title>
+<style>
+  :root{--bg:#f4f6fb;--card:#fff;--ink:#0f1b34;--sub:#64748b;--line:#e6eaf2;--blue:#1d4ed8;--green:#16a34a;--orange:#ea580c;--red:#dc2626;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  body{background:var(--bg);color:var(--ink);padding:24px 16px;min-height:100vh}
+  .wrap{max-width:920px;margin:0 auto}
+  .head{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+  .logo{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;box-shadow:0 6px 20px rgba(29,78,216,.28)}
+  h1{font-size:22px;font-weight:800;letter-spacing:-.02em}
+  .head p{color:var(--sub);font-size:13px;margin-top:2px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+  @media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;position:relative;overflow:hidden}
+  .kpi .bar{position:absolute;inset:0 0 auto 0;height:4px}
+  .kpi .l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--sub)}
+  .kpi .v{font-size:clamp(22px,3.4vw,32px);font-weight:800;margin-top:8px;font-variant-numeric:tabular-nums}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px}
+  .card h2{font-size:15px;font-weight:800;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:640px){.grid{grid-template-columns:repeat(2,1fr)}}
+  label{display:block;font-size:12px;font-weight:600;color:var(--sub);margin-bottom:6px}
+  input,select{width:100%;height:42px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font-size:15px;font-weight:600;color:var(--ink);background:#fbfcfe;outline:none;transition:border .15s}
+  input:focus,select:focus{border-color:var(--blue);background:#fff}
+  .be{margin-top:14px;font-size:13px;color:var(--sub);background:#f1f5fb;border-radius:10px;padding:10px 14px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);padding:8px 6px;border-bottom:1px solid var(--line)}
+  td{padding:8px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  td.r,th.r{text-align:right}
+  tr.total td{font-weight:800;border-top:2px solid #cbd5e1;background:#f8fafc}
+  .pos{color:var(--green)}.neg{color:var(--red)}
+  .foot{text-align:center;color:var(--sub);font-size:12px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="logo">📈</div>
+    <div><h1>Profit Calculator</h1><p>Auto to Rental — model your monthly &amp; yearly income</p></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><span class="bar" style="background:#2563eb"></span><div class="l">Monthly revenue</div><div class="v" id="k_rev" style="color:#2563eb">—</div></div>
+    <div class="kpi"><span class="bar" style="background:#ea580c"></span><div class="l">Monthly costs</div><div class="v" id="k_cost" style="color:#ea580c">—</div></div>
+    <div class="kpi"><span class="bar" style="background:#16a34a"></span><div class="l">Monthly profit</div><div class="v" id="k_prof">—</div></div>
+    <div class="kpi"><span class="bar" style="background:#16a34a"></span><div class="l">Year 1 profit</div><div class="v" id="k_year">—</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Your numbers</h2>
+    <div class="grid">
+      <div><label>Currency</label><select id="cur"><option value="$">USD ($)</option><option value="AED ">AED</option><option value="€">EUR (€)</option><option value="£">GBP (£)</option><option value="SAR ">SAR</option></select></div>
+      <div><label>Subscribers (paying)</label><input id="subs" type="number" min="0" value="10"></div>
+      <div><label>Price / subscriber / month</label><input id="price" type="number" min="0" value="150"></div>
+      <div><label>New subscribers / month</label><input id="growth" type="number" min="0" value="3"></div>
+      <div><label>Server cost / month</label><input id="server" type="number" min="0" value="40"></div>
+      <div><label>AI server cost / month</label><input id="ai" type="number" min="0" value="0"></div>
+      <div><label>Other costs / month</label><input id="other" type="number" min="0" value="15"></div>
+    </div>
+    <div class="be" id="be"></div>
+  </div>
+
+  <div class="card">
+    <h2>12-month projection</h2>
+    <table>
+      <thead><tr><th>Month</th><th class="r">Subscribers</th><th class="r">Revenue</th><th class="r">Net</th><th class="r">Cumulative</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="foot">All calculations run live in your browser · share this link freely</div>
+</div>
+<script>
+  var $=function(id){return document.getElementById(id)};
+  function n(id){return Math.max(0,Number($(id).value)||0)}
+  function calc(){
+    var sym=$("cur").value, subs=n("subs"), price=n("price"), growth=n("growth");
+    var costs=n("server")+n("ai")+n("other");
+    var rev=subs*price, prof=rev-costs;
+    var be=price>0?Math.ceil(costs/price):0;
+    var fmt=function(x){return sym+Math.round(x).toLocaleString()};
+    var cls=function(x){return x>=0?"pos":"neg"};
+    $("k_rev").textContent=fmt(rev);
+    $("k_cost").textContent=fmt(costs);
+    $("k_prof").textContent=fmt(prof); $("k_prof").className="v "+cls(prof);
+    var cum=0,s=subs,rows="";
+    for(var m=1;m<=12;m++){
+      var r=s*price, p=r-costs; cum+=p;
+      rows+='<tr><td>Month '+m+'</td><td class="r">'+s+'</td><td class="r">'+fmt(r)+'</td><td class="r '+cls(p)+'">'+fmt(p)+'</td><td class="r '+cls(cum)+'" style="font-weight:700">'+fmt(cum)+'</td></tr>';
+      s+=growth;
+    }
+    rows+='<tr class="total"><td>Year 1 total</td><td class="r">'+s+' subs</td><td></td><td></td><td class="r '+cls(cum)+'">'+fmt(cum)+'</td></tr>';
+    $("rows").innerHTML=rows;
+    $("k_year").textContent=fmt(cum); $("k_year").className="v "+cls(cum);
+    $("be").innerHTML='⚖️ Break-even at <b style="color:#0f1b34">'+be+'</b> subscribers · '+(prof>=0?'<b class="pos">Profitable now</b>':'<b class="neg">'+(be-subs)+' more subscribers to break even</b>');
+  }
+  ["cur","subs","price","growth","server","ai","other"].forEach(function(id){$(id).addEventListener("input",calc)});
+  calc();
+</script>
+</body>
+</html>

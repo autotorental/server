@@ -1,0 +1,27 @@
+{
+  "name": "@acme/vendor",
+  "private": true,
+  "version": "2.1.2",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 7001",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview --port 7001",
+    "generate-onboarding": "node scripts/generate-onboarding-assets.mjs"
+  },
+  "dependencies": {
+    "@acme/api": "*",
+    "@mercurjs/vendor": "2.1.2",
+    "cobe": "^2.0.1",
+    "d3-geo": "^3.1.1",
+    "i18next": "^26.2.0",
+    "topojson-client": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/d3-geo": "^3.1.0",
+    "@types/node": "^24.10.1",
+    "@types/topojson-client": "^3.1.5",
+    "sharp": "^0.34.5"
+  }
+}

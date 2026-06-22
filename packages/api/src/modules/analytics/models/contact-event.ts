@@ -1,0 +1,25 @@
+import { model } from "@medusajs/framework/utils"
+
+export const ContactEvent = model.define("contact_event", {
+  id: model.id({ prefix: "cevt" }).primaryKey(),
+  product_id: model.text().index(),
+  seller_id: model.text().index(),
+  event_type: model.enum(["call", "whatsapp", "webrtc", "view"]).index(),
+  ip_address: model.text().nullable(),
+  user_agent: model.text().nullable(),
+  referer: model.text().nullable(),
+  country_code: model.text().nullable(),
+  country_name: model.text().nullable(),
+  city: model.text().nullable(),
+  device_type: model.text().nullable(),
+  hour: model.number().nullable(),
+  day_of_week: model.number().nullable(),
+  customer_id: model.text().nullable(),
+  utm_source: model.text().nullable(),
+  utm_medium: model.text().nullable(),
+  utm_campaign: model.text().nullable(),
+  utm_content: model.text().nullable(),
+  utm_term: model.text().nullable(),
+  referrer: model.text().nullable(),
+  metadata: model.json().nullable(),
+})

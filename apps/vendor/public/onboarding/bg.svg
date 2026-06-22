@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- Deep premium gradient: dark navy → brand blue → deep blue -->
+    <linearGradient id="bg" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#050d1a"/>
+      <stop offset="40%" stop-color="#0a1f3f"/>
+      <stop offset="100%" stop-color="#0d2a5e"/>
+    </linearGradient>
+    <!-- Gold accent gradient -->
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c9a84c" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#f5d078" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#c9a84c" stop-opacity="0"/>
+    </linearGradient>
+    <!-- Glow circles -->
+    <radialGradient id="glow1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1753b0" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#1753b0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4480d2" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#4480d2" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Grid pattern -->
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M60 0H0V60" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
+    </pattern>
+    <!-- Diagonal lines luxury texture -->
+    <pattern id="diag" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="20" stroke="#ffffff" stroke-opacity="0.025" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Base bg -->
+  <rect width="1200" height="1800" fill="url(#bg)"/>
+  <!-- Texture overlays -->
+  <rect width="1200" height="1800" fill="url(#grid)"/>
+  <rect width="1200" height="1800" fill="url(#diag)"/>
+
+  <!-- Glow accents -->
+  <circle cx="900" cy="320" r="500" fill="url(#glow1)"/>
+  <circle cx="200" cy="1400" r="600" fill="url(#glow2)"/>
+  <circle cx="650" cy="900" r="350" fill="url(#glow1)" opacity="0.5"/>
+
+  <!-- Gold accent lines -->
+  <rect x="0" y="480" width="1200" height="1" fill="url(#gold)"/>
+  <rect x="0" y="1200" width="1200" height="1" fill="url(#gold)" opacity="0.5"/>
+
+  <!-- Decorative car silhouette (abstract lines suggesting speed) -->
+  <g opacity="0.06" stroke="#ffffff" stroke-width="1.5" fill="none">
+    <!-- Road lines perspective -->
+    <path d="M400 1800 L580 900 L600 900 L820 1800Z" stroke-opacity="0.08"/>
+    <path d="M0 1500 Q600 700 1200 1300" stroke-dasharray="4 8"/>
+    <path d="M0 1600 Q600 800 1200 1400" stroke-dasharray="4 8"/>
+    <path d="M0 1700 Q600 900 1200 1500" stroke-dasharray="4 8"/>
+  </g>
+
+  <!-- Stars/particles -->
+  <g fill="#ffffff">
+    <circle cx="120" cy="150" r="1.5" opacity="0.4"/>
+    <circle cx="340" cy="80" r="1" opacity="0.3"/>
+    <circle cx="890" cy="200" r="2" opacity="0.35"/>
+    <circle cx="1050" cy="120" r="1.5" opacity="0.3"/>
+    <circle cx="180" cy="420" r="1" opacity="0.25"/>
+    <circle cx="760" cy="350" r="1.5" opacity="0.3"/>
+    <circle cx="1100" cy="550" r="1" opacity="0.25"/>
+    <circle cx="50" cy="700" r="2" opacity="0.2"/>
+    <circle cx="950" cy="750" r="1.5" opacity="0.3"/>
+    <circle cx="300" cy="1100" r="1" opacity="0.2"/>
+    <circle cx="1150" cy="1000" r="2" opacity="0.25"/>
+  </g>
+
+  <!-- Top branding strip -->
+  <rect x="0" y="0" width="1200" height="3" fill="#1753b0" opacity="0.8"/>
+</svg>

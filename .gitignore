@@ -1,0 +1,36 @@
+node_modules/
+dist/
+.env
+.env.*
+uploads/*
+!uploads/.gitkeep
+geoip/
+*.log
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+*.sublime-project
+*.sublime-workspace
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+.next/
+dist/
+build/
+*.pack
+*.pack.old
+
+# Backups
+apps/storefront-backup-*
+apps/admin-backup-*
+
+# Reports/generated files
+/var/www/html/ai-reports/

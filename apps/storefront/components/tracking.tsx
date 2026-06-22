@@ -1,0 +1,275 @@
+"use client"
+import { useEffect, useMemo, useState } from "react"
+import { usePathname, useSearchParams } from "next/navigation"
+import Script from "next/script"
+
+// Environment-driven IDs (filled in by .env.local — leave blank to skip a network)
+const ENV_GA4 = process.env.NEXT_PUBLIC_GA4_ID || ""
+const ENV_GADS = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || ""
+const META = process.env.NEXT_PUBLIC_META_PIXEL_ID || ""
+const TIKTOK = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID || ""
+const API = process.env.NEXT_PUBLIC_API_URL || "https://api.autotorental.com"
+const KEY = process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || ""
+
+// Cookie helpers
+function getCookie(k: string) {
+  if (typeof document === "undefined") return ""
+  const m = document.cookie.match(new RegExp(`${k}=([^;]+)`))
+  return m?.[1] || ""
+}
+
+// Owner/staff opt-out: opening any page with ?notrack=1 stores a 1-year cookie so
+// THIS device is never counted in Live Traffic / Recordings. ?notrack=0 clears it.
+function setNotrack(on: boolean) {
+  if (typeof document === "undefined") return
+  document.cookie = on
+    ? "atr_notrack=1; path=/; max-age=31536000; samesite=lax"
+    : "atr_notrack=; path=/; max-age=0; samesite=lax"
+}
+function isNotracked(search: any): boolean {
+  const p = search?.get?.("notrack")
+  if (p === "1") return true
+  if (p === "0") return false
+  return getCookie("atr_notrack") === "1"
+}
+
+// First-party session id (sessionStorage, no cookie, no PII) for the live traffic dashboard.
+function liveSessionId(): string {
+  try {
+    let s = sessionStorage.getItem("atr_sid")
+    if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem("atr_sid", s) }
+    return s
+  } catch { return "" }
+}
+
+export default function Tracking() {
+  const pathname = usePathname()
+  const search = useSearchParams()
+  const [ga4, setGa4] = useState(ENV_GA4)
+  const [gads, setGads] = useState(ENV_GADS)
+  const [clarityId, setClarityId] = useState("")
+  const [metaPixel, setMetaPixel] = useState(META)
+  const [gaReady, setGaReady] = useState(false)
+  const consent = getCookie("cookie_consent")
+  const allowMarketing = consent === "all"
+
+  // Persist ?notrack=1/0 to a per-device cookie.
+  useEffect(() => {
+    const p = search?.get("notrack")
+    if (p === "1") setNotrack(true)
+    else if (p === "0") setNotrack(false)
+  }, [search])
+
+  const pagePath = useMemo(() => {
+    const q = search?.toString()
+    return `${pathname || "/"}${q ? `?${q}` : ""}`
+  }, [pathname, search])
+
+  // Pull GA4 Measurement ID from backend settings so storefront starts sending real GA4 data
+  // without requiring a separate frontend env deploy.
+  useEffect(() => {
+    fetch(`${API}/store/analytics/firebase-config`, {
+      headers: {
+        "x-publishable-api-key": KEY,
+      },
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const id = (d?.ga4_measurement_id || "").trim()
+        if (id && !ENV_GA4) setGa4(id)
+        const clarity = (d?.clarity_project_id || "").trim()
+        if (clarity) setClarityId(clarity)
+        const ads = (d?.google_ads_id || "").trim()
+        if (ads && !ENV_GADS) setGads(ads)
+        const mp = (d?.meta_pixel_id || "").trim()
+        if (mp && !META) setMetaPixel(mp)
+        const w = window as any
+        w.__atrAdsId = (ads || ENV_GADS || "")
+        w.__atrAdsLabels = { lead: (d?.google_ads_label_lead || "").trim(), call: (d?.google_ads_label_call || "").trim(), purchase: (d?.google_ads_label_purchase || "").trim() }
+      })
+      .catch(() => {})
+  }, [])
+
+  // GA4 (gtag) is loaded statically in the document <head> so Google detects it and it
+  // runs for every visitor. Here we just mark it ready and add Google Ads on consent.
+  useEffect(() => {
+    const w = window as any
+    if (typeof w.gtag !== "function") return
+    if (gads && allowMarketing) w.gtag("config", gads)
+    setGaReady(true)
+  }, [allowMarketing, ga4, gads])
+
+  useEffect(() => {
+    if (!gaReady || !ga4) return
+    const w = window as any
+    if (!w.gtag) return
+    if (isNotracked(search)) return
+    w.gtag("event", "page_view", {
+      page_path: pagePath,
+      page_location: window.location.href,
+      page_title: document.title,
+    })
+  }, [allowMarketing, gaReady, ga4, pagePath])
+
+  // First-party live traffic ping (no cookie, no PII) — powers the admin Live Traffic page.
+  useEffect(() => {
+    if (isNotracked(search)) return
+    try {
+      fetch(`${API}/store/analytics/hit`, {
+        method: "POST",
+        keepalive: true,
+        headers: { "Content-Type": "application/json", "x-publishable-api-key": KEY },
+        body: JSON.stringify({ path: pagePath, session_id: liveSessionId(), referrer: typeof document !== "undefined" ? document.referrer : "" }),
+      }).catch(() => {})
+    } catch {}
+  }, [pagePath])
+
+  // First-party session replay (rrweb) — records to OUR backend so recordings
+  // play inside the admin dashboard (no third party). Inputs are fully masked.
+  useEffect(() => {
+    if (isNotracked(search)) return
+    let stop: (() => void) | undefined
+    let buf: any[] = []
+    let timer: any
+    const sid = liveSessionId()
+    const flush = (final?: boolean) => {
+      if (!buf.length) return
+      const batch = buf
+      buf = []
+      try {
+        fetch(`${API}/store/analytics/rrweb`, {
+          method: "POST",
+          // keepalive caps the body at 64KB — fine for the tiny final flush, but
+          // the full-DOM snapshot is much bigger, so regular flushes must NOT use it.
+          keepalive: !!final,
+          headers: { "Content-Type": "application/json", "x-publishable-api-key": KEY },
+          body: JSON.stringify({ session_id: sid, path: window.location.pathname, events: batch }),
+        }).catch(() => {})
+      } catch {}
+      if (final && timer) clearInterval(timer)
+    }
+    import("rrweb")
+      .then((rrweb: any) => {
+        stop = rrweb.record({
+          emit(ev: any) {
+            buf.push(ev)
+            // The full-DOM snapshot (type 2) is large and REQUIRED for replay —
+            // send it right away in its own batch so it is never lost if the
+            // visitor leaves within the 5s flush window.
+            if (ev && ev.type === 2) { try { flush() } catch {} }
+          },
+          maskAllInputs: true,
+          maskTextSelector: "[data-private]",
+          recordCanvas: false,
+          collectFonts: false,
+          sampling: { mousemove: 100, scroll: 150, input: "last" },
+        })
+        timer = setInterval(() => flush(), 5000)
+      })
+      .catch(() => {})
+    const onHide = () => { if (document.visibilityState === "hidden") flush(true) }
+    document.addEventListener("visibilitychange", onHide)
+    window.addEventListener("pagehide", () => flush(true))
+    return () => {
+      document.removeEventListener("visibilitychange", onHide)
+      if (timer) clearInterval(timer)
+      if (stop) stop()
+      flush(true)
+    }
+  }, [])
+
+  return (
+    <>
+      {/* Microsoft Clarity — heatmaps + session recordings (analytics, loads for all visitors) */}
+      {clarityId && (
+        <Script id="ms-clarity" strategy="afterInteractive">{`
+          (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window, document, "clarity", "script", "${clarityId}");
+        `}</Script>
+      )}
+
+      {/* Meta Pixel (Facebook + Instagram) — marketing, consent-gated */}
+      {allowMarketing && metaPixel && (
+        <Script id="meta-pixel" strategy="afterInteractive">{`
+          !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+            n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+            document,'script','https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', '${metaPixel}');
+          fbq('track', 'PageView');
+        `}</Script>
+      )}
+
+      {/* TikTok Pixel — marketing, consent-gated */}
+      {allowMarketing && TIKTOK && (
+        <Script id="tiktok-pixel" strategy="afterInteractive">{`
+          !function (w, d, t) { w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script");n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+          ttq.load('${TIKTOK}');
+          ttq.page();
+        }(window, document, 'ttq');
+        `}</Script>
+      )}
+    </>
+  )
+}
+
+// Helper to fire conversion events from anywhere in the app
+export function trackEvent(name: string, params: Record<string, any> = {}) {
+  if (typeof window === "undefined") return
+  const w = window as any
+  // Google Analytics
+  if (w.gtag) {
+    w.gtag("event", name, params)
+  }
+  // Meta Pixel — map our event names to Meta standard events
+  const metaMap: Record<string, string> = {
+    contact_whatsapp: "Lead",
+    contact_phone: "Lead",
+    contact_webrtc: "Lead",
+    vehicle_view: "ViewContent",
+    follow_company: "Lead",
+    search: "Search",
+    subscription_purchase: "Purchase",
+    signup: "CompleteRegistration",
+  }
+  const metaEvent = metaMap[name]
+  const CAPI_API = process.env.NEXT_PUBLIC_API_URL || "https://api.autotorental.com"
+  const CAPI_KEY = process.env.NEXT_PUBLIC_PUBLISHABLE_KEY || ""
+  const eid = (w.crypto && w.crypto.randomUUID ? w.crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2))
+  const ck = (k: string): string | undefined => { try { const m = document.cookie.match(new RegExp(k + "=([^;]+)")); return m ? m[1] : undefined } catch { return undefined } }
+  // Meta Pixel (browser) with event_id for de-duplication against CAPI
+  if (w.fbq && metaEvent) {
+    w.fbq("track", metaEvent, params, { eventID: eid })
+  }
+  // Google Ads conversion action (send_to: AW-xxx/label)
+  const _labels: Record<string, string | undefined> = w.__atrAdsLabels || {}
+  const _adsId: string = w.__atrAdsId || ""
+  const _lblMap: Record<string, string | undefined> = { contact_whatsapp: _labels.lead, contact_phone: _labels.call || _labels.lead, contact_webrtc: _labels.lead, follow_company: _labels.lead, subscription_purchase: _labels.purchase }
+  const _lbl = _lblMap[name]
+  if (w.gtag && _adsId && _lbl) {
+    w.gtag("event", "conversion", { send_to: _adsId + "/" + _lbl, value: params.value, currency: params.currency || "AED", transaction_id: eid })
+  }
+  // Server-side Meta Conversions API (deduped via eventID) — survives ad-blockers & iOS
+  if (metaEvent) {
+    try {
+      fetch(CAPI_API + "/store/track-conversion", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json", "x-publishable-api-key": CAPI_KEY }, body: JSON.stringify({ type: metaEvent, event_id: eid, value: params.value, currency: params.currency || "AED", content_id: params.vehicle_id || params.content_id, email: params.email, phone: params.phone, url: location.href, fbp: ck("_fbp"), fbc: ck("_fbc") }) }).catch(() => {})
+    } catch (e) {}
+  }
+  // TikTok
+  const tiktokMap: Record<string, string> = {
+    contact_whatsapp: "Contact",
+    contact_phone: "Contact",
+    contact_webrtc: "Contact",
+    vehicle_view: "ViewContent",
+    follow_company: "SubmitForm",
+    search: "Search",
+  }
+  if (w.ttq && tiktokMap[name]) {
+    w.ttq.track(tiktokMap[name], params)
+  }
+}

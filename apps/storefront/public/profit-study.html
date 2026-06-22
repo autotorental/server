@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Auto to Rental — Profit Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== THEME TOKENS — black / white / brand-blue ===== */
+  html[data-theme="dark"]{
+    --bg:#06080f; --surface:#0c0f18; --surface2:#121622; --hover:#1a2030;
+    --brd:#1f2638; --brd2:#2c3650; --txt:#f3f6fb; --muted:#9aa6bd; --dim:#5e6b85;
+    --accent:#3b82f6; --on-accent:#fff; --accent-tint:rgba(59,130,246,.12); --accent-brd:rgba(59,130,246,.5);
+    --bar-rev:#f3f6fb; --bar-cost:#52607a; --shadow:0 0 0 1px rgba(255,255,255,.02),0 8px 30px rgba(0,0,0,.5);
+  }
+  html[data-theme="light"]{
+    --bg:#fff; --surface:#fff; --surface2:#f5f8fc; --hover:#eef3fa;
+    --brd:#e6ebf3; --brd2:#cdd6e4; --txt:#0b1424; --muted:#5b6b86; --dim:#94a3b8;
+    --accent:#2563eb; --on-accent:#fff; --accent-tint:rgba(37,99,235,.10); --accent-brd:rgba(37,99,235,.45);
+    --bar-rev:#0b1424; --bar-cost:#c3cfe0; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 16px rgba(10,30,80,.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter','IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--bg);color:var(--txt);
+    min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:14px 26px;border-bottom:1px solid var(--brd);background:var(--bg)}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#60a5fa);color:#fff;
+    display:grid;place-items:center;font-size:16px;font-weight:900}
+  .brand .bt{font-weight:800;font-size:15px;letter-spacing:-.3px}
+  .brand .bs{font-size:11.5px;color:var(--dim);font-weight:500}
+  .controls{margin-inline-start:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .seg{display:flex;background:var(--surface);border:1px solid var(--brd);border-radius:9px;overflow:hidden}
+  .seg button{padding:7px 13px;background:none;border:none;color:var(--muted);cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:12.5px;transition:.15s}
+  .seg button.active{background:var(--accent);color:var(--on-accent)}
+  .seg button:not(.active):hover{color:var(--txt);background:var(--hover)}
+  .icon-btn{width:36px;height:36px;border-radius:9px;background:var(--surface);border:1px solid var(--brd);
+    color:var(--txt);cursor:pointer;display:grid;place-items:center;font-size:16px;transition:.15s}
+  .icon-btn:hover{background:var(--hover)}
+
+  .wrap{max-width:1200px;margin:0 auto;padding:30px 26px 70px}
+  .pagehead h1{font-size:30px;font-weight:800;letter-spacing:-.9px;line-height:1.15}
+  .pagehead p{color:var(--muted);font-size:15px;margin-top:8px}
+
+  .presets-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:24px 0}
+  .presets-row .pl{font-size:12.5px;color:var(--dim);font-weight:600}
+  .preset{padding:8px 15px;border-radius:8px;background:var(--surface);border:1px solid var(--brd);
+    color:var(--muted);cursor:pointer;font-family:inherit;font-weight:600;font-size:13px;transition:.15s}
+  .preset:hover{color:var(--txt);border-color:var(--brd2)}
+  .preset.active{background:var(--accent);color:var(--on-accent);border-color:transparent;font-weight:700}
+
+  .layout{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}
+  @media(max-width:920px){.layout{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--brd);border-radius:14px;box-shadow:var(--shadow)}
+  .card-h{padding:15px 19px;border-bottom:1px solid var(--brd);font-size:12px;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.7px}
+  .card-b{padding:19px}
+
+  .field{margin-bottom:20px}.field:last-child{margin-bottom:0}
+  .field .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;gap:10px}
+  .field label{font-size:13.5px;color:var(--txt);font-weight:500}
+  .field .val{font-size:14px;font-weight:800;color:var(--txt);direction:ltr}
+  input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;
+    background:var(--brd2);outline:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);cursor:pointer}
+  .num-in{width:100%;background:var(--bg);border:1px solid var(--brd2);border-radius:9px;padding:11px 13px;
+    color:var(--txt);font-family:inherit;font-size:16px;font-weight:700;outline:none;text-align:center;direction:ltr;transition:.15s}
+  .num-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-tint)}
+  .hint{font-size:11.5px;color:var(--dim);margin-top:7px;line-height:1.5}
+
+  .results{display:flex;flex-direction:column;gap:18px}
+  /* allow grid/flex children to shrink below content width (kills horizontal drag on mobile) */
+  .layout>*,.results,.two,.stats,.results>*,.two>*,.stats>*{min-width:0}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+  @media(max-width:1100px){.stats{grid-template-columns:1fr 1fr}}
+  .stat{background:var(--surface);border:1px solid var(--brd);border-radius:13px;padding:17px;box-shadow:var(--shadow)}
+  .stat .sl{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .stat .sv{font-size:29px;font-weight:800;letter-spacing:-1px;margin-top:10px;direction:ltr;text-align:start;line-height:1.05}
+  .stat .ss{font-size:11.5px;color:var(--dim);margin-top:6px;direction:ltr;text-align:start}
+  .stat.hl{border-color:var(--accent-brd);background:linear-gradient(160deg,var(--accent-tint),var(--surface) 65%)}
+  .stat.hl .sl{color:var(--txt)}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:680px){.two{grid-template-columns:1fr}}
+  .line{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;padding:10px 0;border-bottom:1px solid var(--brd)}
+  .line:last-child{border-bottom:none}
+  .line .nm{color:var(--muted);display:flex;align-items:center;gap:9px}
+  .line .am{font-weight:600;direction:ltr}
+  .line.tot{margin-top:4px;padding-top:12px;border-top:1px solid var(--brd2);border-bottom:none}
+  .line.tot .nm{color:var(--txt);font-weight:700}.line.tot .am{font-size:15px;font-weight:800}
+  .dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+
+  .svg-wrap{width:100%;overflow:hidden}
+  .svg-wrap svg{width:100%;height:auto;display:block;overflow:visible}
+  .svg-wrap text{font-family:'Inter','IBM Plex Sans Arabic',sans-serif}
+  .svg-wrap .ax{font-size:9px;fill:var(--dim)}
+  .svg-wrap .lab{font-size:10.5px;font-weight:700;fill:var(--txt)}
+  .svg-wrap .cat{font-size:11px;fill:var(--muted);font-weight:500}
+  .svg-wrap rect,.svg-wrap polyline,.svg-wrap path,.svg-wrap circle{transition:all .5s cubic-bezier(.4,0,.2,1)}
+
+  .pill{display:inline-flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--brd);border-radius:30px;padding:6px 13px;font-size:13px;color:var(--muted)}
+  .pill b{color:var(--txt);font-size:15px;direction:ltr}
+
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{color:var(--dim);font-weight:600;font-size:11px;padding:11px 12px;border-bottom:1px solid var(--brd);text-transform:uppercase;letter-spacing:.4px;text-align:start}
+  td{padding:13px 12px;border-bottom:1px solid var(--brd);direction:ltr;color:var(--txt);text-align:start}
+  html[dir=rtl] td:first-child,html[dir=rtl] th:first-child{text-align:right}
+  td:first-child{color:var(--muted);font-weight:700}
+  tr:last-child td{border-bottom:none}
+  tr.hl td{background:var(--accent-tint)}
+
+  .note{background:var(--surface);border:1px solid var(--brd);border-radius:13px;padding:17px 19px;font-size:13px;color:var(--muted);line-height:2}
+  .note .nh{color:var(--txt);font-weight:700;display:block;margin-bottom:7px;font-size:13.5px}
+  .note .nh::before{content:"";display:inline-block;width:8px;height:8px;background:var(--accent);border-radius:2px;margin-inline-end:8px;vertical-align:middle}
+  .note span.b{color:var(--txt);font-weight:600}
+
+  /* ===== MOBILE (phone) — fit everything, no horizontal drag ===== */
+  @media(max-width:560px){
+    .topbar{padding:11px 14px;gap:9px}
+    .brand .mark{width:30px;height:30px}
+    .brand .bt{font-size:13.5px}.brand .bs{font-size:10.5px}
+    .controls{gap:6px}
+    .seg button{padding:6px 10px;font-size:12px}
+    .icon-btn{width:34px;height:34px;font-size:15px}
+    .wrap{padding:20px 14px 60px}
+    .pagehead h1{font-size:23px;letter-spacing:-.5px}
+    .pagehead p{font-size:13.5px;margin-top:6px}
+    .presets-row{gap:7px;margin:18px 0}
+    .preset{padding:7px 12px;font-size:12.5px}
+    .stats{gap:10px}
+    .stat{padding:14px;border-radius:12px}
+    .stat .sv{font-size:21px;letter-spacing:-.5px;margin-top:7px}
+    .stat .ss{font-size:10.5px}
+    .two{gap:14px}
+    .card-b{padding:15px}
+    .field{margin-bottom:17px}
+    table{font-size:11.5px}
+    th{padding:8px 5px;font-size:8.5px;letter-spacing:0}
+    td{padding:9px 5px}
+    .note{padding:15px 16px;line-height:1.9}
+    .chat-fab{bottom:18px;inset-inline-end:18px;width:52px;height:52px;font-size:22px}
+    .chat-panel{bottom:80px;inset-inline-end:12px;height:min(540px,calc(100vh - 110px))}
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">A</div>
+      <div><div class="bt">Auto to <span style="color:var(--accent)">Rental</span></div><div class="bs" data-i18n="brand_sub">دراسة الأرباح</div></div>
+    </div>
+    <div class="controls">
+      <button class="icon-btn" id="themeBtn" title="theme">🌙</button>
+      <div class="seg" id="curToggle">
+        <button data-c="aed" class="active" data-i18n="cur_aed">درهم</button>
+        <button data-c="usd" data-i18n="cur_usd">USD $</button>
+      </div>
+      <div class="seg" id="langToggle">
+        <button data-l="ar" class="active">العربية</button>
+        <button data-l="en">English</button>
+        <button data-l="th">ไทย</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="pagehead">
+      <h1 data-i18n="title">دراسة أرباح المنصّة</h1>
+      <p data-i18n="subtitle">غيّر الأرقام وشوف ربحك الشهري والسنوي من اشتراكات شركات التأجير — بدون عمولة حجز</p>
+    </div>
+
+    <div class="presets-row">
+      <span class="pl" data-i18n="presets_label">نماذج سريعة:</span>
+      <button class="preset" data-n="50">50</button>
+      <button class="preset" data-n="500">500</button>
+      <button class="preset" data-n="5000">5,000</button>
+      <button class="preset" data-n="50000">50,000</button>
+      <button class="preset" data-n="200000">200,000</button>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <div class="card-h" data-i18n="inputs_title">الإعدادات</div>
+        <div class="card-b">
+          <div class="field"><div class="top"><label data-i18n="f_subs">عدد المشتركين (شركات التأجير)</label></div>
+            <input type="number" class="num-in" id="subsNum" value="500" min="1" max="1000000" />
+            <input type="range" id="subs" min="0" max="200000" step="50" value="500" style="margin-top:12px" /></div>
+          <div class="field"><div class="top"><label data-i18n="f_subprice">متوسط الاشتراك/شهر</label><span class="val" id="subPriceV">99 AED</span></div>
+            <input type="range" id="subPrice" min="30" max="500" step="10" value="99" /><div class="hint" data-i18n="h_subprice">باقتك: Basic 99 / Plus 150 درهم — عبر Mollie</div></div>
+          <div class="field"><div class="top"><label data-i18n="f_ads">إيراد إضافي/شركة (إعلانات مميّزة)</label><span class="val" id="adsV">20 AED</span></div>
+            <input type="range" id="ads" min="0" max="300" step="10" value="20" /><div class="hint" data-i18n="h_ads">شركات تدفع لتصدير سياراتها أعلى النتائج</div></div>
+          <div class="field"><div class="top"><label data-i18n="f_mollie">رسوم الدفع (Mollie)</label><span class="val" id="mollieV">1.8%</span></div>
+            <input type="range" id="mollie" min="0" max="4" step="0.1" value="1.8" /><div class="hint" data-i18n="h_mollie">تُخصم من الإيراد المحصّل</div></div>
+          <div class="field"><div class="top"><label data-i18n="f_server">تكلفة الخوادم/شركة/شهر</label><span class="val" id="serverV">3 AED</span></div>
+            <input type="range" id="server" min="0" max="30" step="0.5" value="3" /><div class="hint" data-i18n="h_server">VPS + Cloudflare + قاعدة البيانات</div></div>
+          <div class="field"><div class="top"><label data-i18n="f_ai">تكلفة الذكاء/شركة/شهر</label><span class="val" id="aiV">1 AED</span></div>
+            <input type="range" id="ai" min="0" max="20" step="0.5" value="1" /><div class="hint" data-i18n="h_ai">Ollama محلي على سيرفرك ≈ مجاني</div></div>
+          <div class="field"><div class="top"><label data-i18n="f_fixed">تكاليف ثابتة شهرية</label></div>
+            <input type="number" class="num-in" id="fixed" value="10000" min="0" /><div class="hint" data-i18n="h_fixed">الفريق + التسويق + الترجمة + الأدوات</div></div>
+        </div>
+      </div>
+
+      <div class="results">
+        <div class="stats">
+          <div class="stat"><div class="sl" data-i18n="r_revM">الإيرادات الشهرية</div><div class="sv" id="revM">$0</div><div class="ss" id="revY">$0</div></div>
+          <div class="stat"><div class="sl" data-i18n="r_costM">التكاليف الشهرية</div><div class="sv" id="costM">$0</div><div class="ss" id="costY">$0</div></div>
+          <div class="stat hl"><div class="sl" data-i18n="r_profitM">الربح الشهري الصافي</div><div class="sv" id="profitM">$0</div><div class="ss" id="profitPer">$0</div></div>
+          <div class="stat hl"><div class="sl" data-i18n="r_profitY">الربح السنوي الصافي</div><div class="sv" id="profitY">$0</div><div class="ss"><span class="pill"><span data-i18n="lbl_margin">هامش:</span> <b id="margin">0%</b></span></div></div>
+        </div>
+
+        <div class="two">
+          <div class="card"><div class="card-h" data-i18n="bd_rev">مصادر الإيرادات</div><div class="card-b">
+            <div class="line"><span class="nm"><span class="dot" style="background:var(--txt)"></span><span data-i18n="li_subs">الاشتراكات</span></span><span class="am" id="r1">$0</span></div>
+            <div class="line"><span class="nm"><span class="dot" style="background:var(--accent)"></span><span data-i18n="li_ads">الإعلانات المميّزة</span></span><span class="am" id="r2">$0</span></div>
+            <div class="line tot"><span class="nm" data-i18n="li_total">الإجمالي</span><span class="am" id="rTot">$0</span></div>
+          </div></div>
+          <div class="card"><div class="card-h" data-i18n="bd_cost">التكاليف</div><div class="card-b">
+            <div class="line"><span class="nm"><span class="dot" style="background:var(--bar-cost)"></span><span data-i18n="li_pay">رسوم الدفع (Mollie)</span></span><span class="am" id="c1">$0</span></div>
+            <div class="line"><span class="nm"><span class="dot" style="background:var(--bar-cost)"></span><span data-i18n="li_servers">الخوادم</span></span><span class="am" id="c2">$0</span></div>
+            <div class="line"><span class="nm"><span class="dot" style="background:var(--bar-cost)"></span><span data-i18n="li_ai">الذكاء</span></span><span class="am" id="c3">$0</span></div>
+            <div class="line"><span class="nm"><span class="dot" style="background:var(--bar-cost)"></span><span data-i18n="li_fixed">ثابتة</span></span><span class="am" id="c4">$0</span></div>
+            <div class="line tot"><span class="nm" data-i18n="li_total">الإجمالي</span><span class="am" id="cTot">$0</span></div>
+          </div></div>
+        </div>
+
+        <div class="two">
+          <div class="card"><div class="card-h" data-i18n="chart_title">مقارنة بصرية</div><div class="card-b"><div class="svg-wrap" id="compChart" dir="ltr"></div></div></div>
+          <div class="card"><div class="card-h" data-i18n="map_title">خريطة النمو</div><div class="card-b"><div class="svg-wrap" id="growthChart" dir="ltr"></div></div></div>
+        </div>
+
+        <div class="card"><div class="card-h" data-i18n="scn_title">سيناريوهات النمو</div><div class="card-b" style="padding:6px 12px">
+          <div class="tbl-wrap"><table>
+            <thead><tr><th data-i18n="th_stores">الشركات</th><th data-i18n="th_revmo">إيرادات/شهر</th><th data-i18n="th_costmo">تكاليف/شهر</th><th data-i18n="th_profmo">ربح/شهر</th><th data-i18n="th_profyr">ربح/سنة</th></tr></thead>
+            <tbody id="scenarios"></tbody>
+          </table></div>
+        </div></div>
+
+        <div class="note">
+          <span class="nh" data-i18n="note_title">ملاحظات صدق</span>
+          <span data-i18n="note1">• توقعات لاستكشاف الإمكانيات — مو ضمان.</span><br>
+          <span data-i18n="note2">• بدون عمولة حجز — كل دخلك من الاشتراكات عبر Mollie.</span><br>
+          <span data-i18n="note3">• عند آلاف الشركات زوّد التكاليف الثابتة (فريق، دعم).</span><br>
+          <span data-i18n="note4">• تكلفة جذب الشركات (CAC) غير محسوبة — أضفها للثابتة.</span><br>
+          <span data-i18n="note5">• Ollama المحلي يخلّي تكلفة الذكاء شبه صفر — ميزة كبيرة.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<style>
+  .chat-fab{position:fixed;bottom:24px;inset-inline-end:24px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:var(--on-accent);border:none;cursor:pointer;font-size:24px;z-index:60;box-shadow:0 8px 26px rgba(0,0,0,.45);transition:.2s}
+  .chat-fab:hover{transform:scale(1.07)}
+  .chat-panel{position:fixed;bottom:92px;inset-inline-end:24px;width:368px;max-width:calc(100vw - 32px);height:540px;max-height:calc(100vh - 130px);background:var(--surface);border:1px solid var(--brd2);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);z-index:61;display:none;flex-direction:column;overflow:hidden}
+  .chat-panel.open{display:flex}
+  .chat-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--brd)}
+  .ch-av{width:38px;height:38px;border-radius:10px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-size:19px}
+  .ch-n{font-weight:800;font-size:14.5px}.ch-s{font-size:11.5px;color:var(--muted)}
+  .ch-x{margin-inline-start:auto;width:30px;height:30px;border-radius:8px;background:var(--bg);border:1px solid var(--brd);color:var(--txt);cursor:pointer}
+  .chat-modes{display:flex;gap:7px;padding:11px 14px;border-bottom:1px solid var(--brd)}
+  .cm{flex:1;padding:7px;border-radius:8px;background:var(--bg);border:1px solid var(--brd);color:var(--muted);cursor:pointer;font-family:inherit;font-weight:600;font-size:12.5px}
+  .cm.active{background:var(--accent);color:var(--on-accent);border-color:transparent}
+  .chat-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:86%;padding:10px 13px;border-radius:13px;font-size:13px;line-height:1.75}
+  .msg.bot{background:var(--surface2);border:1px solid var(--brd);align-self:flex-start;border-inline-start:3px solid var(--accent)}
+  .msg.user{background:var(--accent);color:var(--on-accent);align-self:flex-end;font-weight:600}
+  .chat-sugg{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px}
+  .sg{font-size:11.5px;padding:6px 11px;border-radius:20px;background:var(--bg);border:1px solid var(--brd);color:var(--muted);cursor:pointer;transition:.15s}
+  .sg:hover{border-color:var(--accent);color:var(--txt)}
+  .chat-input{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--brd)}
+  .chat-input input{flex:1;background:var(--bg);border:1px solid var(--brd2);border-radius:10px;padding:9px 13px;color:var(--txt);font-family:inherit;font-size:13px;outline:none}
+  .chat-input input:focus{border-color:var(--accent)}
+  .chat-input button{width:38px;border-radius:10px;background:var(--accent);color:var(--on-accent);border:none;cursor:pointer;font-size:16px;font-weight:800}
+  .aiset{width:100%;margin-bottom:7px;padding:8px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--brd2);color:var(--txt);font-family:inherit;font-size:12.5px;outline:none}
+</style>
+<button class="chat-fab" id="chatFab">💬</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head"><div class="ch-av">🚗</div><div><div class="ch-n">Auto to Rental AI</div><div class="ch-s" id="chatModeLbl"></div></div><button class="ch-x" id="chatGear" style="margin-inline-start:auto">⚙️</button><button class="ch-x" id="chatX" style="margin-inline-start:6px">✕</button></div>
+  <div class="chat-modes"><button class="cm active" data-m="investor" id="cmInv"></button><button class="cm" data-m="client" id="cmCli"></button></div>
+  <div class="chat-set" id="chatSet" style="display:none;padding:12px 14px;border-bottom:1px solid var(--brd)">
+    <div style="color:var(--muted);font-size:11.5px;margin-bottom:8px">⚙️ متقدّم: استخدم مزوّدك الخاص (اختياري) · Advanced: your own AI key</div>
+    <select id="aiProvider" class="aiset"><option value="">— قاعدة معرفة فقط / KB only —</option><option value="openai">OpenAI</option><option value="claude">Claude</option><option value="ollama">Ollama (سيرفرك)</option></select>
+    <input id="aiKey" class="aiset" placeholder="API key" style="display:none" />
+    <input id="aiUrl" class="aiset" placeholder="http://your-server:11434" style="display:none" />
+    <input id="aiModel" class="aiset" placeholder="model (اختياري)" style="display:none" />
+    <button id="aiSave" style="width:100%;padding:8px;border-radius:8px;background:var(--accent);color:var(--on-accent);border:none;font-weight:700;cursor:pointer">حفظ · Save</button>
+    <div style="color:var(--dim);font-size:10.5px;margin-top:8px;line-height:1.5">⚠️ للتجربة المحلية فقط · للموقع الحقيقي استخدم backend</div>
+  </div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-sugg" id="chatSugg"></div>
+  <div class="chat-input"><input id="chatIn" /><button id="chatSendBtn">↑</button></div>
+</div>
+<script>
+  const I18N={
+    ar:{brand_sub:"دراسة الأرباح",cur_aed:"درهم",cur_usd:"دولار $",title:"دراسة أرباح المنصّة",
+      subtitle:"غيّر الأرقام وشوف ربحك الشهري والسنوي من اشتراكات شركات التأجير — بدون عمولة حجز",presets_label:"نماذج سريعة:",inputs_title:"الإعدادات",
+      f_subs:"عدد المشتركين (شركات التأجير)",f_subprice:"متوسط الاشتراك/شهر",h_subprice:"باقتك: Basic 99 / Plus 150 درهم — عبر Mollie",
+      f_ads:"إيراد إضافي/شركة (إعلانات مميّزة)",h_ads:"شركات تدفع لتصدير سياراتها أعلى النتائج",f_mollie:"رسوم الدفع (Mollie)",h_mollie:"~1.8% تُخصم من الإيراد المحصّل",
+      f_server:"تكلفة الخوادم/شركة/شهر",h_server:"VPS + Cloudflare + قاعدة البيانات",f_ai:"تكلفة الذكاء/شركة/شهر",h_ai:"Ollama محلي على سيرفرك ≈ مجاني",
+      f_fixed:"تكاليف ثابتة شهرية",h_fixed:"الفريق + التسويق + الترجمة + الأدوات",
+      r_revM:"الإيرادات الشهرية",r_costM:"التكاليف الشهرية",r_profitM:"الربح الشهري الصافي",r_profitY:"الربح السنوي الصافي",
+      sfx_yearly:"سنوياً",sfx_perstore:"لكل شركة",lbl_margin:"هامش:",bd_rev:"مصادر الإيرادات",bd_cost:"التكاليف",
+      li_subs:"الاشتراكات",li_ads:"الإعلانات المميّزة",li_total:"الإجمالي",li_pay:"رسوم الدفع (Mollie)",li_servers:"الخوادم",li_ai:"الذكاء",li_fixed:"ثابتة",
+      chart_title:"مقارنة بصرية",map_title:"خريطة النمو — الربح السنوي حسب الحجم",c_rev:"إيرادات",c_cost:"تكاليف",c_prof:"ربح",scn_title:"سيناريوهات النمو (بإعداداتك)",
+      th_stores:"الشركات",th_revmo:"إيرادات/شهر",th_costmo:"تكاليف/شهر",th_profmo:"ربح/شهر",th_profyr:"ربح/سنة",
+      note_title:"ملاحظات صدق (مهمة)",
+      note1:"• هذي <span class='b'>توقعات</span> لاستكشاف الإمكانيات — مو ضمان.",
+      note2:"• <span class='b'>بدون عمولة حجز</span> — كل دخلك من الاشتراكات عبر Mollie (ميزتك على المنافسين).",
+      note3:"• عند آلاف الشركات <span class='b'>زوّد التكاليف الثابتة</span> (فريق، دعم، رواتب).",
+      note4:"• تكلفة جذب الشركات (CAC) غير محسوبة — أضفها للثابتة.",
+      note5:"• <span class='b'>Ollama المحلي</span> يخلّي تكلفة الذكاء شبه صفر — ميزة كبيرة بالهامش."},
+    en:{brand_sub:"Profit Study",cur_aed:"AED",cur_usd:"USD $",title:"Platform Profit Study",
+      subtitle:"Adjust the numbers and see your monthly & yearly profit from rental-company subscriptions — 0% booking commission",presets_label:"Quick scenarios:",inputs_title:"Inputs",
+      f_subs:"Subscribers (rental companies)",f_subprice:"Avg. subscription / mo",h_subprice:"Your plans: Basic 99 / Plus 150 AED — via Mollie",
+      f_ads:"Extra rev / company (featured listings)",h_ads:"Companies pay to feature their cars on top",f_mollie:"Payment fee (Mollie)",h_mollie:"~1.8% deducted from collected revenue",
+      f_server:"Servers / company / mo",h_server:"VPS + Cloudflare + database",f_ai:"AI / company / mo",h_ai:"Local Ollama on your server ≈ free",
+      f_fixed:"Fixed monthly costs",h_fixed:"Team + marketing + translation + tools",
+      r_revM:"Monthly revenue",r_costM:"Monthly costs",r_profitM:"Net monthly profit",r_profitY:"Net yearly profit",
+      sfx_yearly:"/year",sfx_perstore:"per company",lbl_margin:"Margin:",bd_rev:"Revenue sources",bd_cost:"Costs",
+      li_subs:"Subscriptions",li_ads:"Featured listings",li_total:"Total",li_pay:"Payment fees (Mollie)",li_servers:"Servers",li_ai:"AI",li_fixed:"Fixed",
+      chart_title:"Visual comparison",map_title:"Growth map — yearly profit by scale",c_rev:"Revenue",c_cost:"Costs",c_prof:"Profit",scn_title:"Growth scenarios (your inputs)",
+      th_stores:"Companies",th_revmo:"Rev / mo",th_costmo:"Cost / mo",th_profmo:"Profit / mo",th_profyr:"Profit / yr",
+      note_title:"Honest assumptions (important)",
+      note1:"• These are <span class='b'>projections</span> to explore potential — not a guarantee.",
+      note2:"• <span class='b'>0% booking commission</span> — all income is subscriptions via Mollie (your edge over rivals).",
+      note3:"• At thousands of companies, <span class='b'>raise fixed costs</span> (team, support, salaries).",
+      note4:"• Company acquisition cost (CAC) is not included — add it to fixed costs.",
+      note5:"• <span class='b'>Local Ollama</span> makes AI cost near-zero — a big margin advantage."},
+    th:{brand_sub:"การศึกษาผลกำไร",cur_aed:"AED",cur_usd:"USD $",title:"การศึกษาผลกำไรของแพลตฟอร์ม",subtitle:"ปรับตัวเลขและดูผลกำไรรายเดือนและรายปีของคุณจากการสมัครสมาชิกบริษัทให้เช่า — ค่าคอมมิชชั่นการจอง 0%",presets_label:"ตัวอย่างสถานการณ์โดยย่อ:",inputs_title:"ข้อมูลนำเข้า",f_subs:"ผู้สมัครใช้บริการ (บริษัทให้เช่า)",f_subprice:"ค่าสมัครสมาชิกเฉลี่ยต่อเดือน",h_subprice:"แพ็คเกจของคุณ: พื้นฐาน 99 / แพ็คเกจเพิ่มเติม 150 AED — ผ่าน Mollie",f_ads:"รายได้เสริม / บริษัท (รายการแนะนำ)",h_ads:"บริษัทต่างๆ จ่ายเงินเพื่อให้รถยนต์ของตนปรากฏอยู่ด้านบนสุดของรายการ",f_mollie:"ค่าธรรมเนียมการชำระเงิน (มอลลี่)",h_mollie:"หักประมาณ 1.8% จากรายได้ที่ได้รับ",f_server:"เซิร์ฟเวอร์ / บริษัท / โม",h_server:"VPS + Cloudflare + ฐานข้อมูล",f_ai:"AI / บริษัท / โม",h_ai:"Ollama เวอร์ชันท้องถิ่นบนเซิร์ฟเวอร์ของคุณ ≈ ฟรี",f_fixed:"ค่าใช้จ่ายรายเดือนคงที่",h_fixed:"ทีม + การตลาด + การแปล + เครื่องมือ",r_revM:"รายได้รายเดือน",r_costM:"ค่าใช้จ่ายรายเดือน",r_profitM:"กำไรสุทธิรายเดือน",r_profitY:"กำไรสุทธิรายปี",sfx_yearly:"/ปี",sfx_perstore:"ต่อบริษัท",lbl_margin:"ระยะขอบ:",bd_rev:"แหล่งรายได้",bd_cost:"ค่าใช้จ่าย",li_subs:"การสมัครสมาชิก",li_ads:"รายการแนะนำ",li_total:"ทั้งหมด",li_pay:"ค่าธรรมเนียมการชำระเงิน (มอลลี่)",li_servers:"เซิร์ฟเวอร์",li_ai:"AI",li_fixed:"ที่ตายตัว",chart_title:"การเปรียบเทียบเชิงภาพ",map_title:"แผนที่แสดงการเติบโต — กำไรต่อปีตามขนาดธุรกิจ",c_rev:"รายได้",c_cost:"ค่าใช้จ่าย",c_prof:"กำไร",scn_title:"สถานการณ์การเติบโต (ข้อมูลที่คุณป้อน)",th_stores:"บริษัท",th_revmo:"เรฟ / โม",th_costmo:"ค่าใช้จ่าย/เดือน",th_profmo:"กำไร/เดือน",th_profyr:"กำไร / เดอะ",note_title:"การตั้งสมมติฐานอย่างซื่อสัตย์ (สำคัญมาก)",note1:"• นี่เป็นเพียง <span class='b'>การคาดการณ์</span> เพื่อสำรวจความเป็นไปได้ ไม่ใช่การรับประกัน",note2:"• <span class='b'>0% ค่าคอมมิชชั่นการจอง</span> — รายได้ทั้งหมดมาจากการสมัครสมาชิกผ่าน Mollie (ข้อได้เปรียบของคุณเหนือคู่แข่ง)",note3:"• ในบริษัทหลายพันแห่ง <span class='b'>มีการเพิ่มต้นทุนคงที่</span> (ทีมงาน ฝ่ายสนับสนุน เงินเดือน)",note4:"• ต้นทุนการได้มาซึ่งบริษัท (CAC) ไม่ได้รวมอยู่ด้วย — ให้บวกเพิ่มเข้าไปในต้นทุนคงที่",note5:"• <span class='b'>การใช้ Ollama ในพื้นที่</span> ทำให้ต้นทุนการใช้ AI ใกล้ศูนย์ ซึ่งเป็นข้อได้เปรียบที่สำคัญมาก"}
+  };
+
+  let currency='aed',lang='ar',T=I18N.ar;const RATE=3.6725; // AED per USD
+  const $=id=>document.getElementById(id);
+  function money(v){const x=currency==='usd'?v/RATE:v;const neg=x<0,a=Math.abs(x);let s;
+    if(a>=1e9)s=(a/1e9).toFixed(2)+'B';else if(a>=1e6)s=(a/1e6).toFixed(2)+'M';else s=Math.round(a).toLocaleString('en-US');
+    const out=currency==='usd'?('$'+s):(s+' AED');return neg?'−'+out:out;}
+  function fmtAxis(v){const x=currency==='usd'?v/RATE:v,a=Math.abs(x);
+    if(a>=1e9)return(x/1e9).toFixed(1)+'B';if(a>=1e6)return(x/1e6).toFixed(1)+'M';if(a>=1e3)return Math.round(x/1e3)+'k';return Math.round(x);}
+  function svgComp(r){const W=560,H=210,padL=46,padR=14,padT=28,padB=30,base=H-padB,top=padT,plotL=padL,plotR=W-padR,plotW=plotR-plotL,ph=base-top;
+    const data=[[r.rev,'var(--bar-rev)',T.c_rev],[r.cost,'var(--bar-cost)',T.c_cost],[Math.max(r.profit,0),'var(--accent)',T.c_prof]];
+    const mx=Math.max(r.rev,r.cost,Math.abs(r.profit),1);let grid='';
+    for(let i=0;i<=4;i++){const y=top+ph*i/4,val=mx*(1-i/4);
+      grid+=`<line x1="${plotL}" y1="${y.toFixed(1)}" x2="${plotR}" y2="${y.toFixed(1)}" stroke="var(--brd)"/><text x="${plotL-6}" y="${(y+3).toFixed(1)}" text-anchor="end" class="ax">${fmtAxis(val)}</text>`;}
+    const bw=58,slot=plotW/3;let bars='';
+    data.forEach((d,i)=>{const h=d[0]/mx*ph,x=plotL+slot*i+(slot-bw)/2,y=base-h;
+      bars+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw}" height="${Math.max(h,1).toFixed(1)}" rx="6" style="fill:${d[1]}"/><text x="${(x+bw/2).toFixed(1)}" y="${(y-7).toFixed(1)}" text-anchor="middle" class="lab">${money(d[0])}</text><text x="${(x+bw/2).toFixed(1)}" y="${base+17}" text-anchor="middle" class="cat">${d[2]}</text>`;});
+    return `<svg viewBox="0 0 ${W} ${H}">${grid}<line x1="${plotL}" y1="${base}" x2="${plotR}" y2="${base}" stroke="var(--brd2)"/>${bars}</svg>`;}
+  function svgGrowth(curSubs){const scn=[50,500,5000,50000,200000];const pts=scn.map(s=>({s,p:calc(s).profit*12}));
+    const W=560,H=230,padL=50,padR=20,padT=30,padB=34,base=H-padB,top=padT,plotL=padL,plotR=W-padR,plotW=plotR-plotL,ph=base-top;
+    const vals=pts.map(p=>Math.max(p.p,1)),lmin=Math.log10(Math.min(...vals)),lmax=Math.log10(Math.max(...vals)),span=(lmax-lmin)||1;
+    const xAt=i=>plotL+plotW*i/(pts.length-1),yAt=v=>base-ph*((Math.log10(Math.max(v,1))-lmin)/span);
+    let grid='';for(let i=0;i<=4;i++){const y=top+ph*i/4,lv=Math.pow(10,lmax-span*i/4);
+      grid+=`<line x1="${plotL}" y1="${y.toFixed(1)}" x2="${plotR}" y2="${y.toFixed(1)}" stroke="var(--brd)"/><text x="${plotL-6}" y="${(y+3).toFixed(1)}" text-anchor="end" class="ax">${fmtAxis(lv)}</text>`;}
+    const area=`M ${xAt(0).toFixed(1)},${base} `+pts.map((p,i)=>`L ${xAt(i).toFixed(1)},${yAt(p.p).toFixed(1)}`).join(' ')+` L ${xAt(pts.length-1).toFixed(1)},${base} Z`;
+    const line=pts.map((p,i)=>`${xAt(i).toFixed(1)},${yAt(p.p).toFixed(1)}`).join(' ');let dots='';
+    pts.forEach((p,i)=>{const cx=xAt(i),cy=yAt(p.p),cur=p.s===curSubs,anc=i===0?'start':(i===pts.length-1?'end':'middle');
+      dots+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${cur?5:3.5}" style="fill:var(--accent);stroke:var(--bg);stroke-width:2"/><text x="${cx.toFixed(1)}" y="${(cy-9).toFixed(1)}" text-anchor="${anc}" class="lab">${money(p.p)}</text><text x="${cx.toFixed(1)}" y="${base+17}" text-anchor="middle" class="cat">${p.s>=1000?(p.s/1000)+'k':p.s}</text>`;});
+    return `<svg viewBox="0 0 ${W} ${H}">${grid}<path d="${area}" style="fill:var(--accent);opacity:.13"/><polyline points="${line}" style="fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round"/>${dots}</svg>`;}
+  function calc(subs){const sp=+$('subPrice').value,ad=+$('ads').value,mf=+$('mollie').value/100,sv=+$('server').value,ai=+$('ai').value,fx=+$('fixed').value;
+    const subRev=subs*sp,adsRev=subs*ad,rev=subRev+adsRev,payC=rev*mf,serverC=subs*sv,aiC=subs*ai,cost=payC+serverC+aiC+fx,profit=rev-cost;
+    return {subRev,adsRev,rev,payC,serverC,aiC,fixed:fx,cost,profit};}
+  function render(){const subs=+$('subsNum').value||0,r=calc(subs);
+    $('revM').textContent=money(r.rev);$('revY').textContent=money(r.rev*12)+' '+T.sfx_yearly;
+    $('costM').textContent=money(r.cost);$('costY').textContent=money(r.cost*12)+' '+T.sfx_yearly;
+    $('profitM').textContent=money(r.profit);$('profitPer').textContent=(subs>0?money(r.profit/subs):money(0))+' '+T.sfx_perstore;
+    $('profitY').textContent=money(r.profit*12);$('margin').textContent=(r.rev>0?(r.profit/r.rev*100):0).toFixed(0)+'%';
+    $('r1').textContent=money(r.subRev);$('r2').textContent=money(r.adsRev);$('rTot').textContent=money(r.rev);
+    $('c1').textContent=money(r.payC);$('c2').textContent=money(r.serverC);$('c3').textContent=money(r.aiC);$('c4').textContent=money(r.fixed);$('cTot').textContent=money(r.cost);
+    $('compChart').innerHTML=svgComp(r);
+    $('growthChart').innerHTML=svgGrowth(subs);
+    const scn=[50,500,5000,50000,200000];
+    $('scenarios').innerHTML=scn.map(s=>{const x=calc(s);return `<tr class="${s===subs?'hl':''}"><td>${s.toLocaleString('en-US')}</td><td>${money(x.rev)}</td><td>${money(x.cost)}</td><td>${money(x.profit)}</td><td>${money(x.profit*12)}</td></tr>`;}).join('');
+    $('subPriceV').textContent=money(+$('subPrice').value);$('adsV').textContent=money(+$('ads').value);
+    $('mollieV').textContent=(+$('mollie').value)+'%';$('serverV').textContent=money(+$('server').value);$('aiV').textContent=money(+$('ai').value);}
+  function applyLang(){T=I18N[lang];document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+    document.querySelectorAll('[data-i18n]').forEach(e=>e.innerHTML=T[e.dataset.i18n]);render();if(typeof chatSync==='function')chatSync();}
+
+  $('subs').addEventListener('input',e=>{$('subsNum').value=e.target.value;setPreset(+e.target.value);render();});
+  $('subsNum').addEventListener('input',e=>{let v=+e.target.value||0;if(v<=200000)$('subs').value=v;setPreset(v);render();});
+  ['subPrice','ads','mollie','server','ai','fixed'].forEach(id=>$(id).addEventListener('input',render));
+  function setPreset(n){document.querySelectorAll('.preset').forEach(p=>p.classList.toggle('active',+p.dataset.n===n));}
+  document.querySelectorAll('.preset').forEach(p=>p.onclick=()=>{const n=+p.dataset.n;$('subsNum').value=n;if(n<=200000)$('subs').value=n;setPreset(n);render();});
+  document.querySelectorAll('#curToggle button').forEach(b=>b.onclick=()=>{currency=b.dataset.c;document.querySelectorAll('#curToggle button').forEach(x=>x.classList.remove('active'));b.classList.add('active');render();});
+  document.querySelectorAll('#langToggle button').forEach(b=>b.onclick=()=>{lang=b.dataset.l;document.querySelectorAll('#langToggle button').forEach(x=>x.classList.remove('active'));b.classList.add('active');applyLang();});
+  $('themeBtn').onclick=()=>{const cur=document.documentElement.getAttribute('data-theme');const nx=cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',nx);$('themeBtn').textContent=nx==='dark'?'🌙':'☀️';};
+
+  /* ===== AI Chat Assistant ===== */
+  let chatMode='investor';
+  const CHAT_T={investor:{ar:'للمستثمرين',en:'Investors'},client:{ar:'لشركات التأجير',en:'Rental companies'}};
+  const CHAT_PH={ar:'اكتب سؤالك...',en:'Type your question...'};
+  const CHAT_INTRO={investor:{ar:'أهلاً 👋 أنا مساعد Auto to Rental. اسألني عن الفرصة الاستثمارية: السوق، النموذج الربحي، العوائد، أو التقنية.',en:"Hi 👋 I'm Auto to Rental's assistant. Ask about the investment: market, model, returns, or tech."},client:{ar:'أهلاً 👋 اسألني كيف تضيف شركتك وسياراتك، الأسعار، أو كيف يتصل بك العملاء مباشرة.',en:"Hi 👋 Ask how to list your company and cars, pricing, or how customers contact you directly."}};
+  const CHAT_SG={investor:{ar:['وش هي Auto to Rental؟','النموذج الربحي؟','حجم السوق؟','ليش بدون عمولة؟','العوائد المتوقعة؟'],en:['What is Auto to Rental?','Business model?','Market size?','Why 0% commission?','Expected returns?']},client:{ar:['كيف أضيف شركتي؟','الأسعار؟','كيف يتصل العميل؟','طرق الدفع؟'],en:['How do I list my company?','Pricing?','How do customers call?','Payment methods?']}};
+  const CHAT_KB=[
+    {k:["what is","وش هي","ماهي","ما هي","auto to rental","المشروع","المنصة","idea","فكرة"],a:{ar:"Auto to Rental سوق تأجير سيارات دولي متعدد الشركات — العميل يتصفّح ويتصل ويحجز مباشرة مع شركة التأجير، <b>بدون عمولة حجز</b>. ٧ لغات، ١٣ عملة، تطبيق جوال + موقع + لوحات للشركات والإدارة.",en:"Auto to Rental is an international multi-vendor car-rental marketplace — customers browse, call and book directly with the rental company, <b>0% booking commission</b>. 7 languages, 13 currencies, mobile app + website + vendor & admin dashboards."}},
+    {k:["model","ربح","نموذج","business","عمول","commission","تربح","monet","كيف تكسب","دخل"],a:{ar:"الدخل من <b>اشتراكات شركات التأجير</b> (Basic 99 / Plus 150 درهم شهرياً عبر Mollie) + إعلانات مميّزة اختيارية. <b>بدون عمولة على الحجز</b> — وهذا اللي يجذب الشركات إلينا بدل المنافسين اللي ياخذون 15-25%.",en:"Income comes from <b>rental-company subscriptions</b> (Basic 99 / Plus 150 AED/mo via Mollie) + optional featured listings. <b>No commission on bookings</b> — which pulls companies to us vs rivals taking 15-25%."}},
+    {k:["market","سوق","حجم","size","tam"],a:{ar:"تأجير السيارات سوق ضخم ينمو عالمياً (>100 مليار $). الإمارات وحدها فيها آلاف شركات التأجير. أغلبها يعتمد على واتساب ومكالمات بدون منصة موحّدة — فجوة واضحة لنا.",en:"Car rental is a huge, growing global market (>$100B). The UAE alone has thousands of rental companies — most run on WhatsApp & calls with no unified platform. A clear gap for us."}},
+    {k:["commission","عمولة","بدون","0%","ليش","why","free","مجان"],a:{ar:"المنصات المنافسة تاخذ 15-25% عمولة على كل حجز. إحنا <b>0%</b> — الشركة تستلم فلوسها كاملة وتتواصل مع العميل مباشرة (اتصال/واتساب/مكالمة بالتطبيق). نكسب من الاشتراك الثابت، فالشركة تربح أكثر معنا.",en:"Rival platforms take 15-25% commission per booking. We take <b>0%</b> — the company keeps 100% and talks to the customer directly (call/WhatsApp/in-app call). We earn from a flat subscription, so companies make more with us."}},
+    {k:["return","عوائد","profit","أرباح","توقع","project","ربح سنوي","roi"],a:{ar:"حسب الحاسبة فوق: عند 5,000 شركة ≈ ملايين الدراهم سنوياً بهامش عالي (تكلفة الذكاء شبه صفر عبر Ollama المحلي). جرّب غيّر عدد الشركات وشوف.",en:"Per the calculator above: at 5,000 companies ≈ millions of AED/year at a high margin (AI cost ≈ zero via local Ollama). Try changing the company count and see."}},
+    {k:["tech","تقني","stack","تقنيات","medusa","mollie","livekit","ollama"],a:{ar:"Medusa (محرك التجارة) + Next.js (موقع ٧ لغات) + React Native (تطبيق iOS/Android) + Mollie (الدفع) + LiveKit (مكالمات مباشرة) + Ollama محلي (ذكاء مجاني) + Cloudflare.",en:"Medusa (commerce engine) + Next.js (7-language site) + React Native (iOS/Android app) + Mollie (payments) + LiveKit (direct calls) + local Ollama (free AI) + Cloudflare."}},
+    {k:["risk","مخاطر","خطر"],a:{ar:"المخاطر: المنافسة، جذب الشركات، والتشغيل. نخفّفها بميزة <b>بدون عمولة</b> + اتصال مباشر + تعدد اللغات + تطبيق جوال — قيمة واضحة تجذب الشركات بسرعة.",en:"Risks: competition, company acquisition, ops. We mitigate with the <b>0% commission</b> edge + direct calling + multi-language + mobile app — a clear value that onboards companies fast."}},
+    {k:["invest","استثمار","أموال","ask","fund","تمويل","حصة","equity"],a:{ar:"نبحث عن استثمار للنمو وجذب أول آلاف الشركات والتوسّع لدول جديدة. المبلغ والحصة قابلة للنقاش حسب المرحلة — تواصل معنا.",en:"We're raising to grow, onboard the first thousands of companies, and expand to new countries. Amount & equity are open by stage — get in touch."}},
+    {k:["price","سعر","أسعار","باق","plan","كم","تكلفة","اشتراك"],a:{ar:"باقتان: <b>Basic 99 درهم/شهر</b> و<b>Plus 150 درهم/شهر</b> (مع أدوات ذكاء أكثر). الدفع عبر Mollie (بطاقة/Klarna/PayPal). بدون أي عمولة على الحجوزات.",en:"Two plans: <b>Basic 99 AED/mo</b> and <b>Plus 150 AED/mo</b> (more AI tools). Payment via Mollie (card/Klarna/PayPal). Zero commission on bookings."}},
+    {k:["open","افتح","add","أضيف","list","سجل","شركتي","ابدأ","start"],a:{ar:"تضيف شركتك بدقائق: سجّل، ارفع الرخصة التجارية، أضف سياراتك (أو بالـ VIN يتعبّى تلقائي)، واطلع للعملاء فوراً. يوصلونك بمكالمة/واتساب/مكالمة بالتطبيق مباشرة.",en:"List your company in minutes: sign up, upload your trade license, add cars (or by VIN auto-fill), and go live to customers instantly. They reach you by call/WhatsApp/in-app call directly."}},
+    {k:["pay","دفع","payment","mollie","paypal","klarna","card"],a:{ar:"الاشتراك يُدفع عبر Mollie (بطاقة، Klarna، وPayPal عند التفعيل). حجوزات العملاء تتم مباشرة مع الشركة — المنصة لا تأخذ أي نسبة منها.",en:"Subscription is paid via Mollie (card, Klarna, and PayPal once enabled). Customer bookings happen directly with the company — the platform takes no cut of them."}}
+  ];
+  const CHAT_FB={ar:'سؤال ممتاز! تقدر تسأل عن: السوق، النموذج الربحي، العوائد، التقنية، الأسعار، أو كيف تنضم شركتك. وللتفاصيل الكاملة تواصل مع فريق Auto to Rental.',en:'Great question! Ask about: market, business model, returns, tech, pricing, or how to join. For full details, contact the Auto to Rental team.'};
+  function chatPush(role,text){const b=$('chatBody');const d=document.createElement('div');d.className='msg '+role;d.innerHTML=text;b.appendChild(d);b.scrollTop=b.scrollHeight;}
+  function chatAnswer(text){const t=text.toLowerCase();let best=null,bestN=0;CHAT_KB.forEach(e=>{let n=0;e.k.forEach(k=>{if(t.includes(k.toLowerCase()))n++;});if(n>bestN){bestN=n;best=e;}});return best?(best.a[lang]||best.a.en):(CHAT_FB[lang]||CHAT_FB.en);}
+  const ATR_SYS="You are the official AI assistant for Auto to Rental — an international multi-vendor car-rental marketplace. Customers browse, call and book DIRECTLY with rental companies, with 0% booking commission. Revenue model: rental-company subscriptions (Basic 99 AED/mo, Plus 150 AED/mo) via Mollie + optional featured listings; the platform takes NO cut of bookings. Tech: Medusa v2 + Next.js (7 languages, 13 currencies) + React Native iOS/Android app + Mollie payments (card/Klarna/PayPal) + LiveKit direct calls + local Ollama AI (near-free) + Cloudflare. Edge over rivals (who take 15-25% commission): 0% commission, direct customer contact, multi-language, mobile apps. Answer briefly, helpfully, honestly. ALWAYS reply in the SAME language as the user's message (Arabic or English). If unsure, say so.";
+  function aiCfg(){try{return JSON.parse(localStorage.getItem('atr_ai')||'{}');}catch(e){return {};}}
+  function chatTyping(){const b=$('chatBody'),d=document.createElement('div');d.className='msg bot';d.id='typ'+b.childElementCount;d.textContent='…';b.appendChild(d);b.scrollTop=b.scrollHeight;return d.id;}
+  async function callLLM(userText){const c=aiCfg();if(!c.provider)return null;
+    const sys=ATR_SYS+" Audience: "+(chatMode==='investor'?'an investor — focus on market, model, returns, moat.':'a rental company — focus on how to use the platform.');
+    try{
+      if(c.provider==='claude'){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':c.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:c.model||'claude-3-5-haiku-latest',max_tokens:700,system:sys,messages:[{role:'user',content:userText}]})});const j=await r.json();return (j.content&&j.content[0])?j.content[0].text:('⚠️ '+((j.error&&j.error.message)||'error'));}
+      const url=c.provider==='openai'?'https://api.openai.com/v1/chat/completions':((c.url||'').replace(/\/+$/,'')+'/v1/chat/completions');
+      const h={'content-type':'application/json'};if(c.provider==='openai')h['authorization']='Bearer '+c.key;
+      const r=await fetch(url,{method:'POST',headers:h,body:JSON.stringify({model:c.model||(c.provider==='openai'?'gpt-4o-mini':'qwen2.5:7b'),messages:[{role:'system',content:sys},{role:'user',content:userText}],temperature:0.4})});
+      const j=await r.json();return (j.choices&&j.choices[0])?j.choices[0].message.content:('⚠️ '+((j.error&&j.error.message)||'error'));
+    }catch(e){return (lang==='ar'?'⚠️ تعذّر الاتصال بالذكاء — تأكد من المفتاح/الرابط (وإعدادات CORS).':'⚠️ AI request failed — check key/URL (and CORS).');}
+  }
+  const API_BASE='https://api.autotorental.com';
+  const PUB_KEY='pk_b9c89660573c5c7d3f54d11eb3132be59d6d919d4bb40c98b14877a2048feea1';
+  let chatHist=[];
+  function fmtAI(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n{2,}/g,'<br><br>').replace(/\n/g,'<br>');}
+  async function backendChat(){
+    try{const r=await fetch(API_BASE+'/store/assistant',{method:'POST',headers:{'content-type':'application/json','x-publishable-api-key':PUB_KEY},body:JSON.stringify({mode:chatMode,messages:chatHist.slice(-8)})});
+      if(!r.ok)return null;const j=await r.json();return (j&&j.reply&&j.reply.trim())?j.reply.trim():null;}catch(e){return null;}
+  }
+  async function chatSend(text){if(!text||!text.trim())return;chatPush('user',text);chatHist.push({role:'user',content:text});
+    const id=chatTyping();let ans=null,isAI=false;
+    if(aiCfg().provider){ans=await callLLM(text);isAI=!!ans;}
+    else{ans=await backendChat();isAI=!!ans;}
+    const e=document.getElementById(id);if(e)e.remove();
+    if(!ans){ans=chatAnswer(text);isAI=false;}
+    chatPush('bot',isAI?fmtAI(ans):ans);chatHist.push({role:'assistant',content:ans});
+  }
+  function chatRenderSugg(){const c=$('chatSugg');c.innerHTML=(CHAT_SG[chatMode][lang]||CHAT_SG[chatMode].en).map(s=>`<span class="sg">${s}</span>`).join('');c.querySelectorAll('.sg').forEach(s=>s.onclick=()=>chatSend(s.textContent));}
+  function chatSync(){$('chatModeLbl').textContent=CHAT_T[chatMode][lang]||CHAT_T[chatMode].en;$('cmInv').textContent=CHAT_T.investor[lang]||CHAT_T.investor.en;$('cmCli').textContent=CHAT_T.client[lang]||CHAT_T.client.en;$('chatIn').placeholder=CHAT_PH[lang]||CHAT_PH.en;chatRenderSugg();}
+  function chatSetMode(m){chatMode=m;document.querySelectorAll('.cm').forEach(c=>c.classList.toggle('active',c.dataset.m===m));$('chatBody').innerHTML='';chatHist=[];chatPush('bot',CHAT_INTRO[m][lang]||CHAT_INTRO[m].en);chatSync();}
+  $('chatFab').onclick=()=>$('chatPanel').classList.toggle('open');
+  $('chatX').onclick=()=>$('chatPanel').classList.remove('open');
+  $('cmInv').onclick=()=>chatSetMode('investor');$('cmCli').onclick=()=>chatSetMode('client');
+  $('chatSendBtn').onclick=()=>{chatSend($('chatIn').value);$('chatIn').value='';};
+  $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){chatSend($('chatIn').value);$('chatIn').value='';}});
+  $('chatGear').onclick=()=>{const s=$('chatSet');s.style.display=s.style.display==='none'?'block':'none';};
+  $('aiProvider').onchange=()=>{const p=$('aiProvider').value;$('aiKey').style.display=(p==='openai'||p==='claude')?'block':'none';$('aiUrl').style.display=p==='ollama'?'block':'none';$('aiModel').style.display=p?'block':'none';};
+  $('aiSave').onclick=()=>{localStorage.setItem('atr_ai',JSON.stringify({provider:$('aiProvider').value,key:$('aiKey').value.trim(),url:$('aiUrl').value.trim(),model:$('aiModel').value.trim()}));$('chatSet').style.display='none';chatPush('bot',lang==='ar'?'✅ تم توصيل الذكاء الحقيقي — اسألني أي شي!':'✅ Real AI connected — ask me anything!');};
+  (function(){const c=aiCfg();if(c.provider){$('aiProvider').value=c.provider;$('aiKey').value=c.key||'';$('aiUrl').value=c.url||'';$('aiModel').value=c.model||'';$('aiProvider').onchange();}})();
+  chatPush('bot',CHAT_INTRO[chatMode][lang]||CHAT_INTRO[chatMode].en);
+
+  setPreset(500);applyLang();
+</script>
+</body>
+</html>

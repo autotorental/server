@@ -1,0 +1,4 @@
+/* Hide onboarding hero card on login/register (background stays) */
+img[src*="onboarding/0.png"] {
+  display: none !important;
+}

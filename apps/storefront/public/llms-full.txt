@@ -1,0 +1,62 @@
+# Auto to Rental — Full overview for AI assistants
+
+> Auto to Rental (autotorental.com) is an international multi-vendor car rental marketplace connecting travelers and residents directly with verified rental companies, with zero platform commission. It currently serves the United Arab Emirates and Syria and is expanding worldwide. The site is fully available in 7 languages and 13 currencies.
+
+## Summary
+Auto to Rental aggregates the fleets of hundreds of independent, verified rental companies into a single searchable marketplace. Unlike commission-based booking platforms, Auto to Rental charges no booking fee and takes no commission on rentals — customers contact the rental company directly (phone, WhatsApp, or a free in-app voice/video call) and rent directly from them. This keeps prices low and the relationship direct.
+
+## Who it is for
+- **Renters / travelers:** find and compare rental cars across the whole market by brand, city, body type, and daily/weekly/monthly price; watch car videos; verify companies; and contact them directly.
+- **Rental companies (vendors):** list their fleet for free with zero commission and get a full professional toolkit — real-time traffic analytics, paid advertising (Instagram, Facebook, TikTok, Snapchat, Google) from a prepaid wallet, a custom domain, follower push notifications, automatic car import from an existing website, a company mailbox, and verified/VIP/featured badges.
+
+## How renting works
+1. Search cars by brand, city, body type, and budget (daily, weekly, or monthly).
+2. Open a car listing to see photos, full specifications, the daily/weekly/monthly price, and the rental company.
+3. Contact the company directly — phone, WhatsApp, or a free in-app voice/video call to see the car live.
+4. Agree the terms and rent directly from the verified company. Auto to Rental never takes a commission or booking fee.
+
+## Pricing model
+- Customers pay the rental company directly; the price shown is the price paid.
+- There is no booking commission and no platform fee for renters.
+- Rates are published per day, per week, and per month, set by each rental company.
+
+## Coverage
+- United Arab Emirates: Dubai, Abu Dhabi, Sharjah, Ajman, Ras Al Khaimah, Fujairah, Umm Al Quwain, Al Ain, and Dubai International Airport (DXB) pickup.
+- Syria: Damascus, Aleppo and other cities.
+- Expanding to additional countries.
+
+## Vehicle range
+From economy and family cars (Toyota, Nissan, Hyundai, Kia, Mitsubishi) to premium and luxury/exotic (Mercedes-Benz, BMW, Audi, Lexus, Range Rover, Bentley, Rolls-Royce, Lamborghini, Ferrari, Porsche). Body types include sedan, SUV, crossover, coupe, convertible, hatchback, pickup, van and sports cars.
+
+## Languages & currencies
+- Languages: English, Arabic, Spanish, Chinese, Thai, Russian, Urdu. Each non-English language is served under a locale path prefix (for example /ar for Arabic, /es for Spanish). The entire interface and content are translated.
+- Currencies: 13 supported, including AED, USD, EUR, GBP, SAR and more, with automatic conversion of displayed prices.
+
+## Frequently asked questions
+**Does Auto to Rental charge a booking fee or commission?** No. Renting is direct between the customer and the rental company; Auto to Rental takes no commission and charges no booking fee.
+
+**How do I contact a rental company?** Open any car or company page and contact them directly by phone, WhatsApp, or a free in-app voice/video call.
+
+**Are the rental companies trustworthy?** Every company is reviewed and verified (trade license and identity) before it can list. Verified companies show a green checkmark badge.
+
+**Can I rent monthly / long-term?** Yes. Most companies publish daily, weekly and monthly rates; use the duration filter to compare monthly deals.
+
+**Where can I rent a car in Dubai?** Browse https://autotorental.com/car-rental-dubai or filter cars by Dubai. Airport pickup is available at https://autotorental.com/car-rental-dubai-airport.
+
+**How can a rental company join?** Sign up free at https://autotorental.com/list-your-car. Approval typically takes about 24 hours after verification. There is no commission and no setup fee.
+
+## Key links
+- All cars: https://autotorental.com/cars
+- Rental companies directory: https://autotorental.com/companies
+- Brands: https://autotorental.com/brands
+- Platform features: https://autotorental.com/features
+- List your fleet (for companies): https://autotorental.com/list-your-car
+- Dubai car rental: https://autotorental.com/car-rental-dubai
+- Monthly car rental Dubai: https://autotorental.com/monthly-car-rental-dubai
+- About: https://autotorental.com/about
+- Contact: https://autotorental.com/contact
+- Sitemap (all live listings): https://autotorental.com/sitemap.xml
+
+## Contact
+- Website: https://autotorental.com
+- Phone/WhatsApp: +971 50 898 9060
